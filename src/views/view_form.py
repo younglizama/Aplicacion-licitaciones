@@ -6,8 +6,6 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QGridLayout, QMessageBox, QDialog, QTextBrowser)
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor, QFont, QCursor
-
-# Importamos los textos para que la vista previa sea real
 from src.data.base_texts import TEXTOS_LEGALES
 
 # --- VENTANA DE VISTA PREVIA ---
@@ -20,7 +18,7 @@ class DocumentPreviewDialog(QDialog):
         
         layout = QVBoxLayout(self)
         
-        lbl_info = QLabel("Vista Previa (Idéntica al Editor)")
+        lbl_info = QLabel("Vista Previa (Simulación del Documento Final)")
         lbl_info.setStyleSheet("color: white; font-weight: bold; font-size: 16px; margin-bottom: 5px;")
         layout.addWidget(lbl_info)
         
@@ -30,7 +28,7 @@ class DocumentPreviewDialog(QDialog):
             QTextBrowser {
                 background-color: white;
                 color: black;
-                font-family: 'Times New Roman', serif;
+                font-family: 'Calibri', 'Arial', sans-serif;
                 font-size: 14px;
                 padding: 50px;
                 border: 1px solid #cbd5e1;
@@ -69,6 +67,8 @@ class FormView(QWidget):
         self.dynamic_inputs = [] 
         self.calendar_rows = []  
 
+        # --- SECCIONES OPCIONALES (Checkboxes) ---
+        # "BASES TÉCNICAS" SE ELIMINÓ DE AQUÍ PORQUE ES OBLIGATORIA
         self.SECTIONS_LIST = [
             "CARACTERÍSTICAS DE LA LICITACIÓN", "OBJETIVOS", "DEFINICIONES", 
             "ORDEN DE PRECEDENCIA DE LOS DOCUMENTOS", "CONTENIDO DE LAS BASES", "PLAZOS", 
@@ -94,9 +94,12 @@ class FormView(QWidget):
             QLineEdit, QTextEdit, QComboBox { background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; font-size: 14px; color: white; }
             QLineEdit:focus, QTextEdit:focus, QComboBox:focus { border: 1px solid #3b82f6; background-color: #26334a; }
             QLineEdit:read-only { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+            
+            /* ESTILO RESTAURADO DEL CHECKBOX */
             QCheckBox { spacing: 10px; color: #cbd5e1; font-size: 14px; margin-bottom: 8px; }
             QCheckBox::indicator { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #475569; background: #1e293b; }
             QCheckBox::indicator:checked { background: #3b82f6; border-color: #3b82f6; }
+            
             QPushButton.NavButton { text-align: left; padding: 12px 15px; color: #94a3b8; border: none; font-size: 14px; font-weight: 600; background: transparent; border-radius: 6px; }
             QPushButton.NavButton:checked { background-color: #1e293b; color: #3b82f6; }
             QPushButton.NavButton:hover { background-color: #1e293b; color: white; }
@@ -114,8 +117,7 @@ class FormView(QWidget):
         sl = QVBoxLayout(sidebar); sl.setAlignment(Qt.AlignTop); sl.setContentsMargins(15, 30, 15, 20); sl.setSpacing(10)
         sl.addWidget(QLabel("CONFIGURACIÓN", styleSheet="color: white; font-size: 18px; font-weight: 800; padding-left: 10px; margin-bottom: 20px;"))
         
-        # --- TABS ---
-        self.btn_t1 = self.crear_nav("1. Características Generales", lambda: self.cambiar_tab(0))
+        self.btn_t1 = self.crear_nav("1. Datos Generales", lambda: self.cambiar_tab(0))
         self.btn_t2 = self.crear_nav("2. Estructura Bases", lambda: self.cambiar_tab(1)) 
         self.btn_t3 = self.crear_nav("3. Calendario y Anexos", lambda: self.cambiar_tab(2))    
         
@@ -127,12 +129,11 @@ class FormView(QWidget):
         self.btn_save.clicked.connect(self.save_only)
         sl.addWidget(self.btn_save)
 
-        # Botón Vista Previa
         self.btn_preview = QPushButton("👁️ Vista Previa")
         self.btn_preview.setCursor(Qt.PointingHandCursor); self.btn_preview.setFixedHeight(45)
         self.btn_preview.setStyleSheet("background-color: #475569; color: #94a3b8; border-radius: 6px; font-weight: bold; border:none;")
         self.btn_preview.setEnabled(False)
-        self.btn_preview.clicked.connect(self.show_preview_data)
+        self.btn_preview.clicked.connect(self.show_preview)
         sl.addWidget(self.btn_preview)
 
         btn_next = QPushButton("Ir al Editor  ➜")
@@ -216,7 +217,6 @@ class FormView(QWidget):
         self.inputs["monto_seriedad"].editingFinished.connect(lambda: self.fmt_thousands(self.inputs["monto_seriedad"]))
         self.inputs["monto_cumplimiento"].editingFinished.connect(lambda: self.fmt_thousands(self.inputs["monto_cumplimiento"]))
 
-        # --- EVALUACIÓN (RESTAURO EL DISEÑO ORIGINAL) ---
         v.addWidget(self.create_label("Evaluación y Adjudicación de Ofertas", css_class="SectionTitle"))
         v.addWidget(self.create_label("⚠️ La suma de todos los porcentajes no debe exceder el 100%", style_sheet="color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"))
         
@@ -225,20 +225,26 @@ class FormView(QWidget):
         self.eval_layout.setContentsMargins(0,5,0,0); 
         self.eval_layout.setSpacing(10)
         
-        # Inputs horizontales
         hf=QHBoxLayout(); hf.setSpacing(30)
-        self.add_field_vbox(hf,"Oferta Económica (%)","eval_economica")
-        self.add_field_vbox(hf,"Oferta Técnica (%)","eval_tecnica")
-        self.add_field_vbox(hf,"Antecedentes Legales (%)","eval_experiencia")
+        self.add_field_vbox(hf, "Oferta Económica (%)", "eval_economica")
+        self.add_field_vbox(hf, "Oferta Técnica (%)", "eval_tecnica")
+        self.add_field_vbox(hf, "Antecedentes Legales (%)", "eval_experiencia")
+        
         self.eval_layout.addLayout(hf)
         
         self.dynamic_criteria_layout=QVBoxLayout(); self.dynamic_criteria_layout.setContentsMargins(0,0,0,0); self.dynamic_criteria_layout.setSpacing(10)
         self.eval_layout.addLayout(self.dynamic_criteria_layout)
         
-        ba=QPushButton("+ Agregar Criterio Adicional"); ba.setProperty("class", "BtnAdd"); ba.setCursor(Qt.PointingHandCursor); ba.clicked.connect(self.add_dynamic_criteria)
-        self.eval_layout.addWidget(ba); v.addWidget(self.eval_container); v.addStretch()
+        ba=QPushButton("+ Agregar Criterio Adicional")
+        ba.setProperty("class", "BtnAdd")
+        ba.setCursor(Qt.PointingHandCursor)
+        ba.clicked.connect(self.add_dynamic_criteria)
+        self.eval_layout.addWidget(ba)
+        
+        v.addWidget(self.eval_container)
+        v.addStretch()
 
-    # --- TAB 2: ESTRUCTURA ---
+    # --- TAB 2: ESTRUCTURA (CHECKBOXES ORIGINALES) ---
     def build_tab_structure(self):
         l=QVBoxLayout(self.tab2); l.setContentsMargins(0,0,0,0)
         s=QScrollArea(); s.setWidgetResizable(True)
@@ -246,6 +252,7 @@ class FormView(QWidget):
         s.setWidget(c); l.addWidget(s)
         v.addWidget(self.create_label("Estructura del Documento", css_class="PageTitle"))
         v.addWidget(self.create_label("Seleccione los apartados opcionales:", style_sheet="color: #94a3b8; font-size: 14px; margin-bottom: 20px;"))
+        
         for item in self.SECTIONS_LIST:
             k = "check_" + item.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
             chk=QCheckBox(item); chk.setChecked(True); self.checkboxes[k]=chk; v.addWidget(chk)
@@ -261,6 +268,7 @@ class FormView(QWidget):
         v.addWidget(self.create_label("Anexo N°1: Calendario", css_class="PageTitle"))
         v.addWidget(self.create_label("Defina las actividades clave del proceso (Actividad, Inicio, Término, Obs).", style_sheet="color: #94a3b8; margin-bottom: 20px;"))
 
+        # Headers 4 Columnas
         h = QWidget(); hl = QHBoxLayout(h); hl.setContentsMargins(0,0,0,0); hl.setSpacing(10)
         hl.addWidget(QLabel("ACTIVIDAD"), 3); hl.addWidget(QLabel("F. INICIO"), 1); hl.addWidget(QLabel("F. TÉRMINO"), 1); hl.addWidget(QLabel("OBSERVACIÓN"), 2); hl.addWidget(QLabel(""), 0) 
         v.addWidget(h)
@@ -275,27 +283,34 @@ class FormView(QWidget):
     def add_calendar_row(self, act="", ini="", fin="", obs=""):
         if isinstance(act, bool): act=""
         if isinstance(ini, bool): ini=""
-        row_widget = QWidget(); rl = QHBoxLayout(row_widget); rl.setContentsMargins(0,0,0,0); rl.setSpacing(10)
+        
+        row_widget = QWidget()
+        rl = QHBoxLayout(row_widget); rl.setContentsMargins(0,0,0,0); rl.setSpacing(10)
+        
         i_act = QLineEdit(act); i_act.setPlaceholderText("Ej: Publicación"); i_act.setFixedHeight(40)
         i_ini = QLineEdit(ini); i_ini.setPlaceholderText("Ej: 15-10"); i_ini.setFixedHeight(40)
         i_fin = QLineEdit(fin); i_fin.setPlaceholderText("Ej: 20-10"); i_fin.setFixedHeight(40)
         i_obs = QLineEdit(obs); i_obs.setPlaceholderText("Opcional"); i_obs.setFixedHeight(40)
+        
         b_del = QPushButton("✕"); b_del.setFixedSize(40,40); b_del.setProperty("class", "BtnDelete"); b_del.setCursor(Qt.PointingHandCursor)
+        
         rl.addWidget(i_act, 3); rl.addWidget(i_ini, 1); rl.addWidget(i_fin, 1); rl.addWidget(i_obs, 2); rl.addWidget(b_del)
         self.calendar_layout.addWidget(row_widget)
+        
         entry = {"widget": row_widget, "i_act": i_act, "i_ini": i_ini, "i_fin": i_fin, "i_obs": i_obs}
         self.calendar_rows.append(entry)
         b_del.clicked.connect(lambda: self.remove_calendar_row(entry))
 
     def remove_calendar_row(self, entry):
-        self.calendar_layout.removeWidget(entry["widget"]); entry["widget"].deleteLater()
+        self.calendar_layout.removeWidget(entry["widget"])
+        entry["widget"].deleteLater()
         if entry in self.calendar_rows: self.calendar_rows.remove(entry)
 
-    # --- HELPERS (AQUÍ ESTABA EL ERROR QUE CORREGÍ: v.addWidget(w)) ---
+    # --- HELPERS ---
     def add_field_vbox(self, pl, l, k):
         cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5); v.addWidget(QLabel(l))
         w=QLineEdit(); w.setFixedHeight(45); self.inputs[k]=w
-        v.addWidget(w) # <--- ¡ESTA LÍNEA FALTABA Y AHORA ESTÁ! 
+        v.addWidget(w) 
         pl.addWidget(cnt)
 
     def add_dynamic_criteria(self, n="", p=""):
@@ -328,28 +343,22 @@ class FormView(QWidget):
     
     def fmt_thousands(self, w): t=w.text().replace(".",""); w.setText("{:,}".format(int(t)).replace(",", ".") if t.isdigit() else t)
 
-    # --- VALIDACIÓN DEL 100% ---
     def validate_percentages(self):
         total = 0
-        # Sumar campos fijos
         for k in ["eval_economica", "eval_tecnica", "eval_experiencia"]:
             try: val = int(self.inputs[k].text().strip())
             except: val = 0
             total += val
-        
-        # Sumar dinámicos
         for _, i_pct, _ in self.dynamic_inputs:
             try: val = int(i_pct.text().strip())
             except: val = 0
             total += val
-            
         if total > 100:
             QMessageBox.warning(self, "Error de Validación", f"La suma de los porcentajes es {total}%. No debe exceder el 100%.")
             return False
         return True
 
     def _save_internal(self):
-        # VALIDAR ANTES DE GUARDAR
         if not self.validate_percentages():
             return False
 
@@ -357,6 +366,9 @@ class FormView(QWidget):
         for k, w in self.inputs.items(): d[k] = w.toPlainText() if isinstance(w, QTextEdit) else (w.currentText() if isinstance(w, QComboBox) else w.text())
         for k, w in self.checkboxes.items(): d[k] = 1 if w.isChecked() else 0
         
+        # --- FORZAR GUARDADO DE BASES TÉCNICAS (YA QUE SE QUITÓ DEL CHECKBOX) ---
+        d["check_bases_tecnicas"] = 1
+
         dyn, txt = [], ""
         for n, p, _ in self.dynamic_inputs:
             nv, pv = n.text().strip(), p.text().strip()
@@ -386,80 +398,74 @@ class FormView(QWidget):
             self.btn_preview.setStyleSheet("background-color: #8b5cf6; color: white; border-radius: 6px; font-weight: bold; border:none;")
             QMessageBox.information(self, "Guardado", "Datos guardados. Vista Previa habilitada.")
 
-    # --- LÓGICA COMPLETA DE VISTA PREVIA ---
-    def show_preview_data(self):
+    # --- VISTA PREVIA ---
+    def show_preview(self):
         d = self.controller.current_session.get("data", {})
         
         css = """<style>
-            body { font-family: 'Times New Roman', serif; font-size: 14px; color: #000; line-height: 1.2; }
-            h1 { text-align: center; font-size: 16px; margin: 20px 0; text-transform: uppercase; color: black; }
-            h2 { font-size: 14px; margin-top: 20px; text-transform: uppercase; text-decoration: none; font-weight: bold; color: black; }
-            p { margin-bottom: 10px; text-align: justify; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px; }
-            td, th { border: 1px solid black; padding: 5px; vertical-align: top; }
-            .th-gray { background-color: #f2f2f2; font-weight: bold; width: 30%; }
-            .th-head { background-color: #e5e7eb; font-weight: bold; text-align: center; }
+            body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 14px; line-height: 1.4; color: #000; }
+            h1 { text-align: center; font-size: 18px; margin: 20px 0; text-transform: uppercase; color: #000; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            h2 { font-size: 16px; margin-top: 25px; margin-bottom: 10px; text-transform: uppercase; font-weight: bold; color: #000; }
+            p, li { margin-bottom: 8px; text-align: justify; }
+            ul { margin-top: 5px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+            td, th { border: 1px solid #000; padding: 6px; vertical-align: top; }
+            .th-head { background-color: #e0e0e0; font-weight: bold; text-align: center; }
+            .gray-bg { background-color: #f0f0f0; font-weight: bold; width: 30%; }
         </style>"""
         
         html = f"{css}<body><h1>LICITACIÓN {d.get('nombre_adquisicion','').upper()}</h1>"
-        html += f"<p><strong>{d.get('organismo','')}</strong> invita a participar...</p>"
+        html += f"<p style='text-align:center'><strong>{d.get('organismo','')}</strong></p><hr>"
 
-        for titulo in self.SECTIONS_LIST:
-            k = "check_" + titulo.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
-            
+        idx = 1
+        for t in self.SECTIONS_LIST:
+            k = "check_" + t.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
             if d.get(k, 0):
-                html += f"<h2>{titulo}</h2>"
                 
-                if titulo == "CARACTERÍSTICAS DE LA LICITACIÓN":
-                    html += f"""<table>
-                        <tr><td class='th-gray'>Razón Social</td><td>{d.get('razon_social','')}</td></tr>
-                        <tr><td class='th-gray'>RUT</td><td>{d.get('rut_empresa','')}</td></tr>
-                        <tr><td class='th-gray'>Comuna</td><td>{d.get('comuna','')}</td></tr>
-                        <tr><td class='th-gray'>Región</td><td>{d.get('region','')}</td></tr>
-                        <tr><td class='th-gray'>Nombre</td><td>{d.get('nombre_adquisicion','')}</td></tr>
-                        <tr><td class='th-gray'>Descripción</td><td>{d.get('descripcion','')}</td></tr>
-                        <tr><td class='th-gray'>Duración</td><td>{d.get('duracion_contrato','')}</td></tr>
-                        <tr><td class='th-gray'>Tipo</td><td>{d.get('tipo_licitacion','')}</td></tr>
-                        <tr><td class='th-gray'>Moneda</td><td>{d.get('moneda','')}</td></tr>
-                    </table>"""
-                elif titulo == "GARANTÍAS":
-                    html += f"""<p><b>Seriedad de la Oferta:</b></p><table>
-                        <tr><td class='th-gray'>Monto</td><td>${d.get('monto_seriedad','')}</td></tr>
-                        <tr><td class='th-gray'>Vencimiento</td><td>{d.get('vencimiento_seriedad','')}</td></tr>
-                        <tr><td class='th-gray'>Glosa</td><td>Garantía de seriedad.</td></tr>
-                    </table>
-                    <p><b>Fiel Cumplimiento:</b></p><table>
-                        <tr><td class='th-gray'>Monto</td><td>${d.get('monto_cumplimiento','')}</td></tr>
-                        <tr><td class='th-gray'>Vencimiento</td><td>{d.get('vencimiento_cumplimiento','')}</td></tr>
-                        <tr><td class='th-gray'>Glosa</td><td>Garantía de cumplimiento.</td></tr>
-                    </table>"""
-                elif titulo == "EVALUACIÓN Y ADJUDICACIÓN DE LAS OFERTAS":
-                    items_extra = ""
-                    if d.get('otros_criterios'):
-                        for l in str(d.get('otros_criterios','')).split('\n'):
-                            if l.strip(): items_extra += f"<li>{l.replace('-','').strip()}</li>"
-                    html += f"""<p>Ponderación:</p><ul><li>Económica: {d.get('eval_economica','0')}%</li><li>Técnica: {d.get('eval_tecnica','0')}%</li><li>Experiencia: {d.get('eval_experiencia','0')}%</li>{items_extra}</ul>"""
+                # CARACTERISTICAS
+                if t == "CARACTERÍSTICAS DE LA LICITACIÓN":
+                    html += f"<h2>{t}</h2>"
+                    html += f"<table><tr><td class='gray-bg'>Razón Social</td><td>{d.get('razon_social','')}</td></tr><tr><td class='gray-bg'>RUT</td><td>{d.get('rut_empresa','')}</td></tr><tr><td class='gray-bg'>Comuna</td><td>{d.get('comuna','')}</td></tr><tr><td class='gray-bg'>Región</td><td>{d.get('region','')}</td></tr><tr><td class='gray-bg'>Nombre</td><td>{d.get('nombre_adquisicion','')}</td></tr><tr><td class='gray-bg'>Duración</td><td>{d.get('duracion_contrato','')}</td></tr></table>"
+                
+                # GARANTIAS
+                elif t == "GARANTÍAS":
+                    html += f"<h2>{idx}. {t}</h2>"
+                    html += f"<p><b>Seriedad:</b> ${d.get('monto_seriedad','')}<br><b>Vencimiento:</b> {d.get('vencimiento_seriedad','')}</p>"
+                    html += f"<p><b>Fiel Cumplimiento:</b> ${d.get('monto_cumplimiento','')}<br><b>Vencimiento:</b> {d.get('vencimiento_cumplimiento','')}</p>"
+                    idx += 1
+                
+                # EVALUACION
+                elif t == "EVALUACIÓN Y ADJUDICACIÓN DE LAS OFERTAS":
+                    eco = d.get('eval_economica', '0')
+                    tec = d.get('eval_tecnica', '0')
+                    leg = d.get('eval_experiencia', '0')
+                    
+                    html += f"<h2>{idx}. {t}</h2>"
+                    html += f"<ul><li>Económica: {eco}%</li><li>Técnica: {tec}%</li><li>Experiencia: {leg}%</li>"
+                    if d.get('extra_criteria'):
+                        for c in d.get('extra_criteria'): html += f"<li>{c['name']}: {c['pct']}%</li>"
+                    html += "</ul>"
+                    idx += 1
+                
                 else:
-                    txt = TEXTOS_LEGALES.get(titulo, ""); 
+                    html += f"<h2>{idx}. {t}</h2>"
+                    txt = TEXTOS_LEGALES.get(t, "")
                     try: txt = txt.format(**d)
                     except: pass
                     html += f"<div>{txt}</div>"
+                    idx += 1
 
-        cal_rows = ""
-        for item in d.get("calendario", []):
-            cal_rows += f"<tr><td>{item.get('actividad','')}</td><td>{item.get('inicio','')}</td><td>{item.get('termino','')}</td><td>{item.get('obs','')}</td></tr>"
+        # BASES TÉCNICAS (SIEMPRE VISIBLE)
+        html += "<h2>BASES TÉCNICAS</h2>"
+        bt = TEXTOS_LEGALES.get("BASES TÉCNICAS", "")
+        html += f"<div>{bt}</div>"
 
-        html += f"""
-        <br>
-        <h1 class='subtitle'>BASES TÉCNICAS</h1>
-        <p>[Especificaciones Técnicas...]</p>
+        # CALENDARIO
+        cr = ""
+        for i in d.get("calendario", []):
+            cr += f"<tr><td>{i['actividad']}</td><td>{i['inicio']}</td><td>{i['termino']}</td><td>{i['obs']}</td></tr>"
+        html += f"<br><h2>ANEXO N°1: CALENDARIO DE LA PROPUESTA</h2><table><tr><th class='th-head'>ACTIVIDAD</th><th class='th-head'>INICIO</th><th class='th-head'>TÉRMINO</th><th class='th-head'>OBSERVACIÓN</th></tr>{cr}</table>"
         
-        <h2>ANEXO N°1: CALENDARIO DE LA PROPUESTA</h2>
-        <table>
-            <tr><th class='th-head'>ACTIVIDAD</th><th class='th-head'>INICIO</th><th class='th-head'>TÉRMINO</th><th class='th-head'>OBSERVACIÓN</th></tr>
-            {cal_rows}
-        </table>
-        """
         DocumentPreviewDialog(html, self).exec()
 
     def go_next_view(self): 
@@ -475,6 +481,12 @@ class FormView(QWidget):
                 else: w.setText(str(v))
         for k, v in d.items():
             if k in self.checkboxes: self.checkboxes[k].setChecked(bool(v))
+        
+        # Limpiar y recargar dinámicos
+        while self.dynamic_inputs:
+            i1, i2, r = self.dynamic_inputs[0]
+            self.remove_dynamic_criteria(r, i1, i2)
+
         for item in d.get("extra_criteria", []): self.add_dynamic_criteria(item.get("name", ""), item.get("pct", ""))
         
         for entry in self.calendar_rows: self.calendar_layout.removeWidget(entry["widget"]); entry["widget"].deleteLater()

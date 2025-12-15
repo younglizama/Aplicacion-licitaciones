@@ -77,41 +77,100 @@ class MainWindow(QMainWindow):
 
             if 'duracion_contrato' in context: context['duración_contrato'] = context['duracion_contrato']
 
-            for key, text_template in TEXTOS_LEGALES.items():
+            # LISTA ORDENADA EXACTA (Indices)
+            ORDERED_KEYS = [
+                "CARACTERÍSTICAS DE LA LICITACIÓN", "OBJETIVOS", "DEFINICIONES", 
+                "ORDEN DE PRECEDENCIA DE LOS DOCUMENTOS", "CONTENIDO DE LAS BASES", "PLAZOS", 
+                "REQUISITOS DE LOS OFERENTES", "DURACIÓN Y FORMALIZACIÓN DE LA COMPRA", "NOTIFICACIONES", 
+                "LLAMADO A PROPUESTA Y ENTREGA DE BASES", "CONSULTAS, ACLARACIONES Y MODIFICACIONES", 
+                "PRESENTACIÓN DE LAS PROPUESTAS", "ENTREGA DE LAS PROPUESTAS", "APERTURA DE LAS PROPUESTAS", 
+                "ADMISIBILIDAD DE LA PROPUESTA", "ACLARACIONES", "VALIDEZ DE LA PROPUESTA", 
+                "COMISIÓN DE EVALUACIÓN DE LAS OFERTAS", "GARANTÍAS", "ACEPTACIÓN DE OFERTAS", 
+                "ADJUDICACIÓN", "SUSCRIPCIÓN DEL CONTRATO", "DOMICILIO", "TERMINACIÓN ANTICIPADA DEL CONTRATO", 
+                "SOLUCIÓN DE LAS CONTROVERSIAS", "LUGAR Y UNIDAD DE TIEMPO EN QUE SE PRESTAN LOS SERVICIOS",
+                "SANCIONES POR INCUMPLIMIENTO", "OBLIGACIÓN DE RESERVA Y USO DE INFORMACIÓN", 
+                "FORMA DE PAGO / CONDICIONES DE PAGO Y FACTURACIÓN", "RESPONSABILIDAD", 
+                "EVALUACIÓN Y ADJUDICACIÓN DE LAS OFERTAS"
+            ]
+
+            idx = 1
+            rt_bloque_admin = RichText() # Variable maestra para bloques de texto
+
+            for key in ORDERED_KEYS:
                 checkbox_key = "check_" + key.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
                 show_key = f"mostrar_{checkbox_key.replace('check_', '')}"
-                if not context.get(checkbox_key, 0): context[key] = ""; context[show_key] = False; continue
+                
+                if not context.get(checkbox_key, 0): 
+                    context[key] = ""
+                    context[show_key] = False
+                    continue
+                
                 context[show_key] = True
 
+                # --- LÓGICA DE GENERACIÓN ---
+
+                # 1. CARACTERÍSTICAS: Solo título (Tabla en Word)
                 if key == "CARACTERÍSTICAS DE LA LICITACIÓN":
-                    rt = RichText(); rt.add("CARACTERÍSTICAS DE LA LICITACIÓN\n", bold=True, size=24)
-                    rt.add(f"• Razón Social: {context.get('razon_social','')}\n• RUT: {context.get('rut_empresa','')}\n• Comuna: {context.get('comuna','')}\n• Región: {context.get('region','')}\n• Nombre: {context.get('nombre_adquisicion','')}\n• Descripción: {context.get('descripcion','')}\n• Duración: {context.get('duracion_contrato','')}\n• Tipo: {context.get('tipo_licitacion','')}\n• Moneda: {context.get('moneda','')}")
-                    context[key] = rt
+                    rt = RichText()
+                    rt.add(f"{key}\n", bold=True, size=28) # Tamaño grande (aprox 14pt)
+                    context["CARACTERÍSTICAS_DE_LA_LICITACIÓN"] = rt
+                    # No incrementamos idx (índice)
+
+                # 2. GARANTÍAS: Solo título numerado (Tabla en Word)
                 elif key == "GARANTÍAS":
-                    rt = RichText(); rt.add("GARANTÍAS\n", bold=True, size=24)
-                    rt.add("Seriedad de la Oferta:\n", bold=True, underline=True); rt.add(f"• Monto: ${context.get('monto_seriedad','0')}\n• Vencimiento: {context.get('vencimiento_seriedad','')}\n\n")
-                    rt.add("Fiel Cumplimiento:\n", bold=True, underline=True); rt.add(f"• Monto: ${context.get('monto_cumplimiento','0')}\n• Vencimiento: {context.get('vencimiento_cumplimiento','')}")
-                    context[key] = rt
+                    rt = RichText()
+                    rt.add(f"{idx}. {key}", bold=True, size=32) # Tamaño más grande (aprox 16pt)
+                    context["GARANTÍAS"] = rt
+                    idx += 1
+
+                # 3. EVALUACIÓN: Título numerado + Texto generado (Word no tiene tabla fija aqui)
                 elif key == "EVALUACIÓN Y ADJUDICACIÓN DE LAS OFERTAS":
-                    rt = RichText(); rt.add("EVALUACIÓN Y ADJUDICACIÓN DE LAS OFERTAS\n", bold=True, size=24)
-                    rt.add("Ponderación de Criterios:\n", bold=True); rt.add(f"• Económica: {context.get('eval_economica','0')}%\n• Técnica: {context.get('eval_tecnica','0')}%\n• Experiencia: {context.get('eval_experiencia','0')}%\n")
-                    if context.get('otros_criterios'):
-                         for l in str(context.get('otros_criterios','')).split('\n'): 
-                             if l.strip(): rt.add(f"• {l.replace('-','').strip()}\n")
-                    rt.add("\nAdjudicación al mayor puntaje.")
-                    context[key] = rt
+                    rt = RichText()
+                    rt.add(f"{idx}. {key}\n", bold=True, size=32)
+                    rt.add("Ponderación de Criterios:\n", bold=True, size=24)
+                    rt.add(f"• Económica: {context.get('eval_economica','0')}%\n", size=24)
+                    rt.add(f"• Técnica: {context.get('eval_tecnica','0')}%\n", size=24)
+                    rt.add(f"• Experiencia: {context.get('eval_experiencia','0')}%\n", size=24)
+                    if context.get('extra_criteria'):
+                         for c in context.get('extra_criteria'): 
+                             rt.add(f"• {c.get('name')}: {c.get('pct')}%\n", size=24)
+                    rt.add("\nAdjudicación al mayor puntaje.", size=24)
+                    context["EVALUACIÓN_Y_ADJUDICACIÓN_DE_LAS_OFERTAS"] = rt
+                    idx += 1
+
+                # 4. RESTO DE SECCIONES (Objetivos, Plazos...): Van al bloque común
                 else:
+                    text_template = TEXTOS_LEGALES.get(key, "")
                     try: final_text = text_template.format(**context)
                     except: final_text = text_template
                     
-                    # --- CORRECCIÓN INDICES (TITULOS EN NEGRITA) ---
-                    rt_final = RichText(); rt_final.add(f"{key}\n", bold=True, size=24)
-                    rt_final.add(self.html_to_richtext(final_text))
-                    context[key] = rt_final
+                    # Doble salto de línea al inicio y fin para separar bien
+                    rt_bloque_admin.add(f"\n\n{idx}. {key}\n", bold=True, size=32) 
+                    rt_bloque_admin.add(self.html_to_richtext(final_text))
+                    rt_bloque_admin.add("\n")
+                    idx += 1
 
-            # --- ANEXO 1 CON 4 CAMPOS ---
+            # Inyectar el bloque de texto acumulado
+            context["BLOQUE_ADMINISTRATIVO"] = rt_bloque_admin
+
+            # --- BASES TÉCNICAS ---
+            if "BASES TÉCNICAS" in TEXTOS_LEGALES and context.get("check_bases_tecnicas", 0):
+                bt_text = TEXTOS_LEGALES["BASES TÉCNICAS"]
+                try: bt_text = bt_text.format(**context)
+                except: pass
+                rt_bt = RichText()
+                rt_bt.add("\n\nBASES TÉCNICAS\n", bold=True, size=36)
+                rt_bt.add(self.html_to_richtext(bt_text))
+                context["BASES TÉCNICAS"] = rt_bt
+                context["mostrar_bases_tecnicas"] = True
+            else:
+                context["BASES TÉCNICAS"] = ""
+                context["mostrar_bases_tecnicas"] = False
+
+            # --- ANEXO 1: CALENDARIO (Formato Ficha) ---
             rt_anexos = RichText()
-            rt_anexos.add("\nANEXO N°1: CALENDARIO DE LA PROPUESTA\n", bold=True, size=24)
+            rt_anexos.add("\nANEXO N°1: CALENDARIO DE LA PROPUESTA\n", bold=True, size=28)
+            rt_anexos.add("-" * 60 + "\n")
             
             cal_data = context.get("calendario", [])
             if cal_data:
@@ -121,10 +180,10 @@ class MainWindow(QMainWindow):
                     fin = item.get("termino", "-")
                     obs = item.get("obs", "")
                     
-                    rt_anexos.add(f"• {act}: ", bold=True)
-                    info = f"Del {ini} al {fin}"
-                    if obs: info += f" ({obs})"
-                    rt_anexos.add(f"{info}\n")
+                    rt_anexos.add(f"ACTIVIDAD: {act}\n", bold=True, size=24)
+                    rt_anexos.add(f"Inicio: {ini}   |   Término: {fin}\n", size=24)
+                    if obs: rt_anexos.add(f"Observación: {obs}\n", size=24)
+                    rt_anexos.add("-" * 60 + "\n")
             else:
                 rt_anexos.add("[No se han definido actividades en el calendario]\n")
 
