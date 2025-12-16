@@ -127,7 +127,6 @@ class MainWindow(QMainWindow):
             checkbox_key = "check_" + key.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
             if not d.get(checkbox_key, 0): continue
 
-            # --- TABLAS DE GARANTÍA EN VISTA PREVIA ---
             if key == "GARANTÍAS":
                 html += f"<h2>{idx}. GARANTÍAS</h2>"
                 
@@ -170,7 +169,6 @@ class MainWindow(QMainWindow):
                 html += f"<div>{txt}</div>"
                 idx += 1
 
-        # BASES TÉCNICAS
         if d.get("check_bases_tecnicas"):
              html += "<h2>BASES TÉCNICAS</h2>"
              bt_text = d.get("bases_tecnicas_editadas") or TEXTOS_LEGALES.get("BASES TÉCNICAS", "")
@@ -178,7 +176,6 @@ class MainWindow(QMainWindow):
              except: pass
              html += f"<div>{bt_text}</div>"
 
-        # ANEXO CALENDARIO
         html += "<br><h2>ANEXO N°1: CALENDARIO DE LA PROPUESTA</h2>"
         html += "<table>"
         html += "<tr><th class='th-head' style='width: 40%;'>ACTIVIDAD</th><th class='th-head'>INICIO</th><th class='th-head'>TÉRMINO</th><th class='th-head'>OBSERVACIÓN</th></tr>"
@@ -225,24 +222,26 @@ class MainWindow(QMainWindow):
 
                 if key == "CARACTERÍSTICAS DE LA LICITACIÓN": pass 
                 elif key == "GARANTÍAS":
-                    # Mantenemos el título, Word tiene las tablas
-                    rt = RichText(); rt.add(f"{idx}. {key}", bold=True, size=48); context["GARANTÍAS"] = rt; idx += 1
+                    # TAMAÑO CORREGIDO: size=28 (aprox 14pt)
+                    rt = RichText(); rt.add(f"{idx}. {key}", bold=True, size=28); context["GARANTÍAS"] = rt; idx += 1
                 elif key == "EVALUACIÓN Y ADJUDICACIÓN DE LAS OFERTAS":
-                    rt = RichText(); rt.add(f"{idx}. {key}\n", bold=True, size=48)
-                    rt.add("Ponderación de Criterios:\n", bold=True, size=28)
-                    rt.add(f"• Económica: {context.get('eval_economica','0')}%\n", size=28)
-                    rt.add(f"• Técnica: {context.get('eval_tecnica','0')}%\n", size=28)
-                    rt.add(f"• Experiencia: {context.get('eval_experiencia','0')}%\n", size=28)
+                    # TAMAÑOS CORREGIDOS
+                    rt = RichText(); rt.add(f"{idx}. {key}\n", bold=True, size=28)
+                    rt.add("Ponderación de Criterios:\n", bold=True, size=22)
+                    rt.add(f"• Económica: {context.get('eval_economica','0')}%\n", size=22)
+                    rt.add(f"• Técnica: {context.get('eval_tecnica','0')}%\n", size=22)
+                    rt.add(f"• Experiencia: {context.get('eval_experiencia','0')}%\n", size=22)
                     if context.get('extra_criteria'):
-                         for c in context.get('extra_criteria'): rt.add(f"• {c.get('name')}: {c.get('pct')}%\n", size=28)
-                    rt.add("\nAdjudicación al mayor puntaje.", size=28)
+                         for c in context.get('extra_criteria'): rt.add(f"• {c.get('name')}: {c.get('pct')}%\n", size=22)
+                    rt.add("\nAdjudicación al mayor puntaje.", size=22)
                     context["EVALUACIÓN_Y_ADJUDICACIÓN_DE_LAS_OFERTAS"] = rt
                     idx += 1
                 else:
                     text_template = TEXTOS_LEGALES.get(key, "")
                     try: final_text = text_template.format(**context)
                     except: final_text = text_template
-                    rt_bloque_admin.add(f"\n\n{idx}. {key}\n", bold=True, size=48) 
+                    # TAMAÑO CORREGIDO: size=28
+                    rt_bloque_admin.add(f"\n\n{idx}. {key}\n", bold=True, size=28) 
                     rt_bloque_admin.add(self.html_to_richtext(final_text)); rt_bloque_admin.add("\n"); idx += 1
 
             context["BLOQUE_ADMINISTRATIVO"] = rt_bloque_admin
@@ -251,12 +250,13 @@ class MainWindow(QMainWindow):
                 bt_text = context.get("bases_tecnicas_editadas") or TEXTOS_LEGALES["BASES TÉCNICAS"]
                 try: bt_text = bt_text.format(**context)
                 except: pass
-                rt_bt = RichText(); rt_bt.add("\n\nBASES TÉCNICAS\n", bold=True, size=52); rt_bt.add(self.html_to_richtext(bt_text))
+                # TAMAÑO CORREGIDO: size=32
+                rt_bt = RichText(); rt_bt.add("\n\nBASES TÉCNICAS\n", bold=True, size=32); rt_bt.add(self.html_to_richtext(bt_text))
                 context["BASES TÉCNICAS"] = rt_bt; context["mostrar_bases_tecnicas"] = True
             else:
                 context["BASES TÉCNICAS"] = ""; context["mostrar_bases_tecnicas"] = False
 
-            # Aseguramos lista válida para el Word
+            # Validar calendario
             calendario_data = context.get("calendario", [])
             if not isinstance(calendario_data, list): calendario_data = []
             context["calendario"] = calendario_data
