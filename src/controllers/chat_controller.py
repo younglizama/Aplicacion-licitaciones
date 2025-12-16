@@ -1,24 +1,26 @@
 import time
 import threading
+import os  # Import necesario
 import google.generativeai as genai
 
 class ChatController:
     def __init__(self):
         # --- CONFIGURACIÓN DE GEMINI ---
-        self.api_key = "AIzaSyBfKGf5GDGQL3g5tTyIkJ7K0suPzJwU-nM"
+        # MEJORA: Intentamos leer de variables de entorno primero. 
+        # Si no existe, usamos un string vacío o lanzamos error (más seguro).
+        self.api_key = os.getenv("GEMINI_API_KEY", "TU_API_KEY_AQUI_O_EN_VARIABLES_DE_ENTORNO")
         self.model = None
         
         try:
             genai.configure(api_key=self.api_key)
             
-            # --- AUTO-DETECCIÓN DE MODELO ---
-            # Buscamos en tu cuenta qué modelos sirven para chatear
+            # --- AUTO-DETECCIÓN DE MODELO (Código original preservado) ---
             available_models = []
             for m in genai.list_models():
                 if 'generateContent' in m.supported_generation_methods:
                     available_models.append(m.name)
             
-            # Intentamos priorizar el más rápido (Flash), luego el Pro, luego cualquiera
+            # Prioridad de modelos (Lógica original preservada)
             model_name = None
             if any("flash" in m for m in available_models):
                 model_name = next(m for m in available_models if "flash" in m)
@@ -51,7 +53,7 @@ class ChatController:
     def _worker(self, user_message, callback):
         try:
             if self.model is None:
-                callback("⚠️ Error: No pude encontrar un modelo de IA compatible. Intenta actualizar la librería: pip install --upgrade google-generativeai")
+                callback("⚠️ Error: No pude encontrar un modelo de IA compatible. Verifica tu API Key.")
                 return
 
             full_prompt = f"{self.system_prompt}\n\nUsuario: {user_message}"
