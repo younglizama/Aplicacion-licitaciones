@@ -31,7 +31,8 @@ TEXTOS_LEGALES = {
         "I. Bases Administrativas.<br>II. Bases Técnicas.<br>III. Anexos."
     ),
 
-    "PLAZOS": "La presente Propuesta se desarrollará conforme a los plazos establecidos en el Anexo N°1 “Calendario”.",
+    # TEXTO MODIFICADO
+    "PLAZOS": "La presente Propuesta se desarrollará conforme a los plazos establecidos por la institución.",
 
     "REQUISITOS DE LOS OFERENTES": (
         "Podrán participar en esta propuesta privada las personas jurídicas invitadas que cumplan con las exigencias... "
@@ -47,8 +48,9 @@ TEXTOS_LEGALES = {
 
     "LLAMADO A PROPUESTA Y ENTREGA DE BASES": "Se estimará que el oferente conoce y acepta las presentes Bases...",
 
+    # TEXTO MODIFICADO
     "CONSULTAS, ACLARACIONES Y MODIFICACIONES": (
-        "Los proponentes podrán formular consultas vía correo electrónico según el Calendario... "
+        "Los proponentes podrán formular consultas vía correo electrónico dentro de los plazos establecidos. "
         "<b>{organismo}</b> podrá modificar los requerimientos con 24 horas de anticipación."
     ),
 
@@ -77,7 +79,8 @@ TEXTOS_LEGALES = {
 
     "ACEPTACIÓN DE OFERTAS": "<b>{organismo}</b> se reserva el derecho de aceptar o rechazar cualquiera de las ofertas.",
 
-    "ADJUDICACIÓN": "La adjudicación se realizará dentro de los plazos del Anexo N°1...",
+    # TEXTO MODIFICADO
+    "ADJUDICACIÓN": "La adjudicación se realizará dentro de los plazos establecidos por la comisión evaluadora...",
 
     "SUSCRIPCIÓN DEL CONTRATO": "El contrato deberá suscribirse dentro del plazo máximo de 05 días hábiles...",
 
@@ -111,7 +114,7 @@ TEXTOS_LEGALES = {
 
     "RESPONSABILIDAD": "El proponente es el único responsable de la contratación y pago de su personal.",
 
-    # --- NUEVA SECCIÓN: BASES TÉCNICAS (TEXTO BASE) ---
+    # --- BASES TÉCNICAS (TEXTO BASE) ---
     "BASES TÉCNICAS": (
         "<b>1. ANTECEDENTES GENERALES</b><br>"
         "<b>{organismo}</b> requiere contratar los servicios de una empresa especializada para [DESCRIBIR NECESIDAD]. "

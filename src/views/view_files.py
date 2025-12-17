@@ -39,6 +39,7 @@ class FilesView(QWidget):
         sidebar_layout.addWidget(lbl_historial)
         sidebar_layout.addSpacing(20)
 
+        # BOTÓN 1: INICIO (Se mantiene)
         btn_home = QPushButton("🏠 Inicio")
         btn_home.setCursor(Qt.PointingHandCursor)
         btn_home.setFixedHeight(45)
@@ -53,6 +54,25 @@ class FilesView(QWidget):
         """)
         btn_home.clicked.connect(lambda: self.controller.cambiar_vista("welcome"))
         sidebar_layout.addWidget(btn_home)
+        
+        sidebar_layout.addSpacing(10)
+
+        # BOTÓN 2: VOLVER AL FORMULARIO (Nuevo)
+        btn_back_form = QPushButton("❮ Volver al Formulario")
+        btn_back_form.setCursor(Qt.PointingHandCursor)
+        btn_back_form.setFixedHeight(45)
+        btn_back_form.setFont(QFont("Segoe UI Emoji", 12))
+        btn_back_form.setStyleSheet("""
+            QPushButton {
+                background-color: #475569; color: #f8fafc; border-radius: 6px;
+                font-weight: bold; text-align: left; padding-left: 15px; font-size: 14px;
+                border: none;
+            }
+            QPushButton:hover { background-color: #64748b; }
+        """)
+        btn_back_form.clicked.connect(lambda: self.controller.cambiar_vista("form"))
+        sidebar_layout.addWidget(btn_back_form)
+
         sidebar_layout.addStretch()
 
         # ==========================================
@@ -232,7 +252,7 @@ class FilesView(QWidget):
             btn.clicked.connect(callback)
             return btn
 
-        # A. EDITAR
+        # A. EDITAR (AHORA VA AL FORMULARIO, NO AL EDITOR)
         btn_edit = crear_boton("Editar", "#334155", "#475569", lambda: self.edit_licitacion(data))
         layout.addWidget(btn_edit)
 
@@ -281,12 +301,6 @@ class FilesView(QWidget):
         if file_path:
             try:
                 gen = DocumentGenerator(self.TEMPLATE_PATH)
-                # Preparar contexto (usamos los datos guardados en el JSON)
-                # NOTA: Aquí asumimos que datos_json ya tiene las claves limpias (secciones_texto, etc)
-                # Si necesitas reconstruir el texto completo como en el editor, sería ideal llamar al controller
-                # Pero para simplificar, pasamos todo el JSON.
-                
-                # Aplanar estructura para la plantilla
                 context = datos_json.copy()
                 if "secciones_texto" in context:
                     for k, v in context["secciones_texto"].items():
@@ -312,7 +326,8 @@ class FilesView(QWidget):
         if full_data:
             self.controller.current_session["licitacion_id"] = full_data["id"]
             self.controller.current_session["data"] = full_data["datos_json"]
-            self.controller.cambiar_vista("editor")
+            # CAMBIO: Redirige a "form" en lugar de "editor"
+            self.controller.cambiar_vista("form")
 
     def delete_licitacion(self, data):
         reply = QMessageBox.question(self, "Eliminar", f"¿Estás seguro de borrar '{data['nombre']}'?", QMessageBox.Yes | QMessageBox.No)

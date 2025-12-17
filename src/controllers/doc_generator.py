@@ -1,4 +1,4 @@
-from docxtpl import DocxTemplate, RichText
+from docxtpl import DocxTemplate
 import os
 
 class DocumentGenerator:
@@ -15,33 +15,18 @@ class DocumentGenerator:
 
     def generar_word(self, context_data, output_path):
         """
-        Rellena la plantilla procesando recursivamente todo el texto a RichText
-        para respetar los saltos de línea en Word, incluso dentro de listas o diccionarios.
+        Rellena la plantilla directamente con el diccionario de datos.
         """
         try:
             # 1. Cargar la plantilla
             self.doc = DocxTemplate(self.template_path)
             
-            # --- FUNCIÓN AUXILIAR RECURSIVA ---
-            # Convierte strings a RichText y recorre listas/diccionarios
-            def process_context(data):
-                if isinstance(data, str):
-                    # RichText asegura que los \n se conviertan en saltos de línea reales en Word
-                    return RichText(data)
-                elif isinstance(data, list):
-                    return [process_context(item) for item in data]
-                elif isinstance(data, dict):
-                    return {k: process_context(v) for k, v in data.items()}
-                return data
-            # ----------------------------------
-
-            # 2. Procesar todos los datos (incluyendo calendario y otros sub-items)
-            final_context = process_context(context_data)
+            # 2. Renderizar (Inyectar datos crudos)
+            # docxtpl se encarga de todo. No necesitamos convertir nada a RichText
+            # a menos que lo hayamos hecho explícitamente en el main_window.
+            self.doc.render(context_data)
             
-            # 3. Renderizar (Inyectar datos procesados)
-            self.doc.render(final_context)
-            
-            # 4. Guardar
+            # 3. Guardar
             self.doc.save(output_path)
             
             return True, f"Documento generado exitosamente en:\n{output_path}"

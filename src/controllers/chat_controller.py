@@ -8,7 +8,7 @@ class ChatController:
         # --- CONFIGURACIÓN DE GEMINI ---
         # MEJORA: Intentamos leer de variables de entorno primero. 
         # Si no existe, usamos un string vacío o lanzamos error (más seguro).
-        self.api_key = os.getenv("GEMINI_API_KEY", "TU_API_KEY_AQUI_O_EN_VARIABLES_DE_ENTORNO")
+        self.api_key = "AIzaSyBfKGf5GDGQL3g5tTyIkJ7K0suPzJwU-nM"
         self.model = None
         
         try:

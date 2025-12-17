@@ -3,63 +3,10 @@ from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                                QLineEdit, QTextEdit, QPushButton, QFrame, 
                                QComboBox, QScrollArea, QCheckBox, QStackedWidget,
-                               QGridLayout, QMessageBox, QDialog, QTextBrowser,
-                               QFileDialog, QSizePolicy)
+                               QGridLayout, QMessageBox, QFileDialog, QSizePolicy)
 from PySide6.QtCore import Qt, QSize, QTimer
 from PySide6.QtGui import QColor, QFont, QCursor, QIntValidator
 from src.data.base_texts import TEXTOS_LEGALES
-
-class AutoResizingTextEdit(QTextEdit):
-    def __init__(self, text="", parent=None):
-        super().__init__(text, parent)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.setStyleSheet("""
-            background-color: #1e293b; border: 1px solid #334155; 
-            border-radius: 6px; padding: 10px; font-size: 14px; color: white;
-        """)
-        self.textChanged.connect(self.adjust_height)
-        self.setFixedHeight(50) 
-
-    def adjust_height(self):
-        doc_height = self.document().size().height()
-        new_height = int(doc_height + 15)
-        if new_height < 50: new_height = 50
-        self.setFixedHeight(new_height)
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        self.adjust_height()
-
-class DocumentPreviewDialog(QDialog):
-    def __init__(self, html_content, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Vista Previa del Documento")
-        self.setFixedSize(1000, 900) 
-        self.setStyleSheet("background-color: #0f172a;")
-        
-        layout = QVBoxLayout(self)
-        lbl_info = QLabel("Vista Previa (Simulación del Documento Final)")
-        lbl_info.setStyleSheet("color: white; font-weight: bold; font-size: 16px; margin-bottom: 5px;")
-        layout.addWidget(lbl_info)
-        
-        self.viewer = QTextBrowser()
-        self.viewer.setHtml(html_content)
-        self.viewer.setStyleSheet("""
-            QTextBrowser {
-                background-color: white; color: black; font-family: 'Calibri', 'Arial', sans-serif;
-                font-size: 14px; padding: 40px; border: 1px solid #cbd5e1;
-            }
-        """)
-        layout.addWidget(self.viewer)
-        
-        btn_close = QPushButton("Cerrar")
-        btn_close.setCursor(Qt.PointingHandCursor)
-        btn_close.setFixedHeight(40)
-        btn_close.setStyleSheet("QPushButton { background-color: #3b82f6; color: white; border-radius: 6px; font-weight: bold; } QPushButton:hover { background-color: #2563eb; }")
-        btn_close.clicked.connect(self.accept)
-        layout.addWidget(btn_close)
 
 class FormView(QWidget):
     def __init__(self, controller):
@@ -75,19 +22,16 @@ class FormView(QWidget):
                 "rut": "71.980.000-9", "direccion": "Profesora Amanda Labarca N°70",
                 "comuna": "Santiago", "region": "Metropolitana", "organismo": "Fundación Asistencial"
             },
-
             "Centro Médico y Dental Fundación": {
                 "rut": "76.123.456-7", "direccion": "Profesora Amanda Labarca N°70",
                 "comuna": "Santiago", "region": "Metropolitana", "organismo": "CMDF"
             }
-
-            
         }
 
         self.inputs = {}
         self.checkboxes = {}
         self.dynamic_inputs = [] 
-        self.calendar_rows = []  
+        
         self.SECTIONS_LIST = [
             "CARACTERÍSTICAS DE LA LICITACIÓN", "OBJETIVOS", "DEFINICIONES", 
             "ORDEN DE PRECEDENCIA DE LOS DOCUMENTOS", "CONTENIDO DE LAS BASES", "PLAZOS", 
@@ -132,8 +76,7 @@ class FormView(QWidget):
         
         self.btn_t1 = self.crear_nav("1. Datos Generales", lambda: self.cambiar_tab(0))
         self.btn_t2 = self.crear_nav("2. Estructura Bases", lambda: self.cambiar_tab(1)) 
-        self.btn_t3 = self.crear_nav("3. Calendario y Anexos", lambda: self.cambiar_tab(2))    
-        sl.addWidget(self.btn_t1); sl.addWidget(self.btn_t2); sl.addWidget(self.btn_t3); sl.addStretch()
+        sl.addWidget(self.btn_t1); sl.addWidget(self.btn_t2); sl.addStretch()
 
         self.btn_gen_word = QPushButton("📄 Generar Word")
         self.btn_gen_word.setCursor(Qt.PointingHandCursor); self.btn_gen_word.setFixedHeight(45)
@@ -148,14 +91,7 @@ class FormView(QWidget):
         self.btn_save.clicked.connect(lambda: self.save_only(show_msg=True))
         sl.addWidget(self.btn_save)
 
-        self.btn_preview = QPushButton("👁️ Vista Previa")
-        self.btn_preview.setCursor(Qt.PointingHandCursor); self.btn_preview.setFixedHeight(45)
-        self.btn_preview.setStyleSheet("background-color: #475569; color: #94a3b8; border-radius: 6px; font-weight: bold; border:none;")
-        self.btn_preview.setEnabled(False)
-        self.btn_preview.clicked.connect(self.show_preview)
-        sl.addWidget(self.btn_preview)
-
-        btn_next = QPushButton("Ir al Editor  ➜")
+        btn_next = QPushButton("Ir a Archivos  ➜")
         btn_next.setCursor(Qt.PointingHandCursor); btn_next.setFixedHeight(45)
         btn_next.setStyleSheet("background-color: #3b82f6; color: white; border-radius: 6px; font-weight: bold; border:none; margin-top: 10px;")
         btn_next.clicked.connect(self.go_next_view)
@@ -170,7 +106,7 @@ class FormView(QWidget):
         self.stack = QStackedWidget(); cl.addWidget(self.stack)
         self.tab1 = QWidget(); self.build_tab_1(); self.stack.addWidget(self.tab1)
         self.tab2 = QWidget(); self.build_tab_structure(); self.stack.addWidget(self.tab2)
-        self.tab3 = QWidget(); self.build_tab_calendar(); self.stack.addWidget(self.tab3)
+        
         main_layout.addWidget(sidebar); main_layout.addWidget(content)
         
         self.autosave_timer = QTimer(self)
@@ -181,9 +117,11 @@ class FormView(QWidget):
     def crear_nav(self, t, c):
         b=QPushButton(t); b.setProperty("class", "NavButton"); b.setCheckable(True)
         b.setCursor(Qt.PointingHandCursor); b.clicked.connect(c); return b
+
     def cambiar_tab(self, i): 
         self.stack.setCurrentIndex(i)
-        self.btn_t1.setChecked(i==0); self.btn_t2.setChecked(i==1); self.btn_t3.setChecked(i==2)
+        self.btn_t1.setChecked(i==0); self.btn_t2.setChecked(i==1)
+        
     def create_label(self, text, css_class=None, style_sheet=None):
         l = QLabel(text)
         if css_class: l.setProperty("class", css_class)
@@ -200,7 +138,6 @@ class FormView(QWidget):
         g1=QGridLayout(); g1.setVerticalSpacing(15); g1.setHorizontalSpacing(30)
         self.add_field(g1,0,0,"Seleccione Razón Social","razon_social",2,is_combo=True)
         
-        # Corrección: Campos read_only para que no se editen manualmente
         self.add_field(g1,1,0,"RUT Empresa","rut_empresa", read_only=True)
         self.add_field(g1,1,1,"Dirección Comercial","direccion", read_only=True)
         self.add_field(g1,2,0,"Comuna","comuna", read_only=True)
@@ -219,12 +156,22 @@ class FormView(QWidget):
         self.add_field(g2,4,1,"Tipo Licitación","tipo_licitacion",val="Licitación Privada")
         self.add_field(g2,5,0,"Moneda","moneda",val="Pesos Chilenos (CLP)", span=2)
         v.addLayout(g2)
+
+        # --- AQUI: NUEVA SECCIÓN AGREGADA ---
+        v.addWidget(self.create_label("Validez de la Propuesta", css_class="SectionTitle"))
+        v.addWidget(self.create_label("Aquí se indica en <b>días</b> la validez de las ofertas técnicas y económicas", 
+                                      style_sheet="color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"))
+        g_val = QGridLayout(); g_val.setVerticalSpacing(15); g_val.setHorizontalSpacing(30)
+        self.add_field(g_val, 0, 0, "Cantidad de Días", "validez_propuesta", val="30 días")
+        v.addLayout(g_val)
+        # ------------------------------------
+
         v.addWidget(self.create_label("Garantías", css_class="SectionTitle"))
         sl=QVBoxLayout(); sl.setSpacing(5); sl.setContentsMargins(0,0,0,0)
         sl.addWidget(self.create_label("Seriedad de la Oferta", css_class="SubSectionTitle"))
         gs=QGridLayout(); gs.setHorizontalSpacing(30); gs.setVerticalSpacing(10)
         self.add_field(gs,0,0,"Monto ($)","monto_seriedad")
-        self.add_multiline_field(gs,0,1,"Fecha de Vencimiento","vencimiento_seriedad","30 días corridos posteriores...")
+        self.add_multiline_field(gs,0,1,"Fecha de Vencimiento","vencimiento_seriedad","30 días corridos posteriores a la fecha de presentación de la propuesta.")
         sl.addLayout(gs); sl.addSpacing(10)
         sl.addWidget(self.create_label("Fiel Cumplimiento", css_class="SubSectionTitle"))
         gf=QGridLayout(); gf.setHorizontalSpacing(30); gf.setVerticalSpacing(10)
@@ -233,8 +180,9 @@ class FormView(QWidget):
         sl.addLayout(gf); v.addLayout(sl)
         self.inputs["monto_seriedad"].editingFinished.connect(lambda: self.fmt_thousands(self.inputs["monto_seriedad"]))
         self.inputs["monto_cumplimiento"].editingFinished.connect(lambda: self.fmt_thousands(self.inputs["monto_cumplimiento"]))
+        
         v.addWidget(self.create_label("Evaluación y Adjudicación de Ofertas", css_class="SectionTitle"))
-        v.addWidget(self.create_label("⚠️ La suma de todos los porcentajes no debe exceder el 100%", style_sheet="color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"))
+        v.addWidget(self.create_label("⚠️ La suma de todos los porcentajes debe ser exactamente 100%", style_sheet="color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"))
         self.eval_container=QWidget(); self.eval_layout=QVBoxLayout(self.eval_container); self.eval_layout.setContentsMargins(0,5,0,0); self.eval_layout.setSpacing(10)
         hf=QHBoxLayout(); hf.setSpacing(30)
         self.add_field_vbox(hf, "Oferta Económica (%)", "eval_economica", is_pct=True)
@@ -257,40 +205,6 @@ class FormView(QWidget):
             k = "check_" + item.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
             chk=QCheckBox(item); chk.setChecked(True); self.checkboxes[k]=chk; v.addWidget(chk)
         v.addStretch()
-
-    def build_tab_calendar(self):
-        l=QVBoxLayout(self.tab3); l.setContentsMargins(0,0,0,0)
-        s=QScrollArea(); s.setWidgetResizable(True)
-        c=QWidget(); v=QVBoxLayout(c); v.setContentsMargins(60,30,60,40); v.setSpacing(20); v.setAlignment(Qt.AlignTop)
-        s.setWidget(c); l.addWidget(s)
-        v.addWidget(self.create_label("Anexo N°1: Calendario", css_class="PageTitle"))
-        v.addWidget(self.create_label("Defina las actividades clave del proceso.", style_sheet="color: #94a3b8; margin-bottom: 20px;"))
-        h = QWidget(); hl = QHBoxLayout(h); hl.setContentsMargins(0,0,0,0); hl.setSpacing(10)
-        hl.addWidget(QLabel("ACTIVIDAD"), 3); hl.addWidget(QLabel("F. INICIO"), 1); hl.addWidget(QLabel("F. TÉRMINO"), 1); hl.addWidget(QLabel("OBSERVACIÓN"), 2); hl.addWidget(QLabel(""), 0) 
-        v.addWidget(h)
-        self.calendar_layout = QVBoxLayout(); self.calendar_layout.setSpacing(10); v.addLayout(self.calendar_layout)
-        btn_add = QPushButton("+ Agregar Fila"); btn_add.setProperty("class", "BtnAdd"); btn_add.setCursor(Qt.PointingHandCursor)
-        btn_add.clicked.connect(self.add_calendar_row); v.addWidget(btn_add); v.addStretch()
-
-    def add_calendar_row(self, act="", ini="", fin="", obs=""):
-        if isinstance(act, bool): act=""
-        if isinstance(ini, bool): ini=""
-        row_widget = QWidget(); rl = QHBoxLayout(row_widget); rl.setContentsMargins(0,0,0,0); rl.setSpacing(10)
-        i_act = AutoResizingTextEdit(act); i_act.setPlaceholderText("Ej: Publicación")
-        i_ini = QLineEdit(ini); i_ini.setPlaceholderText("Ej: 15-10"); i_ini.setFixedHeight(50)
-        i_fin = QLineEdit(fin); i_fin.setPlaceholderText("Ej: 20-10"); i_fin.setFixedHeight(50)
-        i_obs = AutoResizingTextEdit(obs); i_obs.setPlaceholderText("Opcional")
-        b_del = QPushButton("✕"); b_del.setFixedSize(50,50); b_del.setProperty("class", "BtnDelete"); b_del.setCursor(Qt.PointingHandCursor)
-        rl.addWidget(i_act, 3); rl.addWidget(i_ini, 1); rl.addWidget(i_fin, 1); rl.addWidget(i_obs, 2); rl.addWidget(b_del)
-        self.calendar_layout.addWidget(row_widget)
-        entry = {"widget": row_widget, "i_act": i_act, "i_ini": i_ini, "i_fin": i_fin, "i_obs": i_obs}
-        self.calendar_rows.append(entry)
-        i_act.adjust_height(); i_obs.adjust_height()
-        b_del.clicked.connect(lambda: self.remove_calendar_row(entry))
-
-    def remove_calendar_row(self, entry):
-        self.calendar_layout.removeWidget(entry["widget"]); entry["widget"].deleteLater()
-        if entry in self.calendar_rows: self.calendar_rows.remove(entry)
 
     def add_field_vbox(self, pl, l, k, is_pct=False):
         cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5); v.addWidget(QLabel(l))
@@ -341,14 +255,18 @@ class FormView(QWidget):
             try: val = int(i_pct.text().strip())
             except: val = 0
             total += val
-        if total > 100: return False, total
         return True, total
 
     def _save_internal(self, silent=False):
-        valid, total = self.validate_percentages()
-        if not valid:
-            if not silent: QMessageBox.warning(self, "Error de Validación", f"La suma de los porcentajes es {total}%. No debe exceder el 100%.")
+        _, total = self.validate_percentages()
+        if total != 100:
+            if not silent: 
+                msg = f"La suma de los porcentajes es {total}%.\n"
+                if total > 100: msg += "No debe exceder el 100%."
+                else: msg += "No puede ser menor al 100%."
+                QMessageBox.warning(self, "Error de Validación", msg)
             return False
+            
         d = {}
         for k, w in self.inputs.items(): d[k] = w.toPlainText() if isinstance(w, QTextEdit) else (w.currentText() if isinstance(w, QComboBox) else w.text())
         for k, w in self.checkboxes.items(): d[k] = 1 if w.isChecked() else 0
@@ -359,24 +277,6 @@ class FormView(QWidget):
             if nv: dyn.append({"name":nv, "pct":pv}); txt += f"\n- {nv}: {pv}%"
         d["extra_criteria"] = dyn; d["otros_criterios"] = txt
         
-        # --- BLOQUE CORREGIDO: FILTRO DE CALENDARIO ---
-        cal_data = []
-        for entry in self.calendar_rows:
-            act = entry["i_act"].toPlainText().strip()
-            ini = entry["i_ini"].text().strip()
-            fin = entry["i_fin"].text().strip()
-            obs = entry["i_obs"].toPlainText().strip()
-            # Solo agregar si tiene contenido real
-            if act or ini or fin or obs:
-                cal_data.append({
-                    "actividad": act, 
-                    "inicio": ini, 
-                    "termino": fin, 
-                    "obs": obs
-                })
-        d["calendario"] = cal_data
-        # ----------------------------------------------
-
         if not d.get("razon_social") or not d.get("nombre_adquisicion"): 
             if not silent: QMessageBox.warning(self, "Faltan Datos", "Complete Razón Social y Nombre.")
             return False
@@ -385,23 +285,18 @@ class FormView(QWidget):
 
     def save_only(self, show_msg=True):
         if self._save_internal(silent=not show_msg): 
-            self.btn_preview.setEnabled(True)
-            self.btn_preview.setStyleSheet("background-color: #8b5cf6; color: white; border-radius: 6px; font-weight: bold; border:none;")
             self.btn_gen_word.setEnabled(True)
             self.btn_gen_word.setStyleSheet("background-color: #2563eb; color: white; border-radius: 6px; font-weight: bold; border:none;")
-            if show_msg: QMessageBox.information(self, "Guardado", "Datos guardados. Vista Previa habilitada.")
+            if show_msg: QMessageBox.information(self, "Guardado", "Datos guardados.")
 
     def export_word(self):
         if not self._save_internal(): return
         path, _ = QFileDialog.getSaveFileName(self, "Guardar Licitación", "Licitacion.docx", "Word Files (*.docx)")
         if path: self.controller.generate_docx(path)
 
-    def show_preview(self):
-        html_content = self.controller.generate_preview_html()
-        DocumentPreviewDialog(html_content, self).exec()
-
     def go_next_view(self): 
-        if self._save_internal(): self.controller.cambiar_vista("editor")
+        if self._save_internal(): self.controller.cambiar_vista("files")
+
     def go_back(self): self.controller.cambiar_vista("welcome")
     
     def load_existing_data(self):
@@ -416,23 +311,3 @@ class FormView(QWidget):
             if k in self.checkboxes: self.checkboxes[k].setChecked(bool(v))
         while self.dynamic_inputs: i1, i2, r = self.dynamic_inputs[0]; self.remove_dynamic_criteria(r, i1, i2)
         for item in d.get("extra_criteria", []): self.add_dynamic_criteria(item.get("name", ""), item.get("pct", ""))
-        for entry in self.calendar_rows: self.calendar_layout.removeWidget(entry["widget"]); entry["widget"].deleteLater()
-        self.calendar_rows = []
-        
-        saved_cal = d.get("calendario", [])
-        if not saved_cal:
-            # Filas vacías por defecto visual, pero el filtro evitará que se guarden si no se tocan
-            defaults = [
-                {"act": "Envío de carta invitación y bases de licitación", "obs": ""},
-                {"act": "Visita Terreno", "obs": "(Opcional)"},
-                {"act": "Consultas y aclaraciones", "obs": ""},
-                {"act": "Respuesta a consultas y aclaraciones", "obs": ""},
-                {"act": "Entrega Propuestas", "obs": "hasta 16:00 hrs"},
-                {"act": "Apertura de propuestas (interno) Evaluación de propuestas", "obs": ""},
-                {"act": "Adjudicación", "obs": "(Se enviará carta por medio de correo electronico)"},
-                {"act": "Puesta en marcha convenio y firma de contrato", "obs": ""},
-                {"act": "", "obs": ""}, {"act": "", "obs": ""}, {"act": "", "obs": ""}, {"act": "", "obs": ""}
-            ]
-            for d in defaults: self.add_calendar_row(d["act"], "", "", d["obs"])
-        else:
-            for item in saved_cal: self.add_calendar_row(item.get("actividad"), item.get("inicio"), item.get("termino"), item.get("obs"))
