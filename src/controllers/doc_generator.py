@@ -15,24 +15,28 @@ class DocumentGenerator:
 
     def generar_word(self, context_data, output_path):
         """
-        Rellena la plantilla respetando los saltos de línea y el formato.
+        Rellena la plantilla procesando recursivamente todo el texto a RichText
+        para respetar los saltos de línea en Word, incluso dentro de listas o diccionarios.
         """
         try:
             # 1. Cargar la plantilla
             self.doc = DocxTemplate(self.template_path)
             
-            # 2. PROCESAMIENTO INTELIGENTE DE FORMATO
-            # Recorremos todos los datos. Si es texto, lo convertimos a RichText
-            # para que Word respete los "Enter" (saltos de línea).
-            final_context = {}
-            
-            for key, value in context_data.items():
-                if isinstance(value, str):
+            # --- FUNCIÓN AUXILIAR RECURSIVA ---
+            # Convierte strings a RichText y recorre listas/diccionarios
+            def process_context(data):
+                if isinstance(data, str):
                     # RichText asegura que los \n se conviertan en saltos de línea reales en Word
-                    rt = RichText(value)
-                    final_context[key] = rt
-                else:
-                    final_context[key] = value
+                    return RichText(data)
+                elif isinstance(data, list):
+                    return [process_context(item) for item in data]
+                elif isinstance(data, dict):
+                    return {k: process_context(v) for k, v in data.items()}
+                return data
+            # ----------------------------------
+
+            # 2. Procesar todos los datos (incluyendo calendario y otros sub-items)
+            final_context = process_context(context_data)
             
             # 3. Renderizar (Inyectar datos procesados)
             self.doc.render(final_context)

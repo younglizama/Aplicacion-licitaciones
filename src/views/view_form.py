@@ -71,10 +71,17 @@ class FormView(QWidget):
                 "rut": "71.235.700-2", "direccion": "Profesora Amanda Labarca N°70, piso 5",
                 "comuna": "Santiago", "region": "Metropolitana", "organismo": "Isapre Fundación Banco Estado"
             },
-            "Servicios Integrales Beta Ltda": {
-                "rut": "77.222.222-K", "direccion": "Av. Ejemplo 123",
-                "comuna": "Valparaíso", "region": "Valparaíso", "organismo": "Servicios Beta"
+            "Fundación Asistencial Trabajadores BancoEstado de Chile": {
+                "rut": "71.980.000-9", "direccion": "Profesora Amanda Labarca N°70",
+                "comuna": "Santiago", "region": "Metropolitana", "organismo": "Fundación Asistencial"
+            },
+
+            "Centro Médico y Dental Fundación": {
+                "rut": "76.123.456-7", "direccion": "Profesora Amanda Labarca N°70",
+                "comuna": "Santiago", "region": "Metropolitana", "organismo": "CMDF"
             }
+
+            
         }
 
         self.inputs = {}
@@ -192,13 +199,14 @@ class FormView(QWidget):
         v.addWidget(self.create_label("Información General y Empresa", css_class="SectionTitle"))
         g1=QGridLayout(); g1.setVerticalSpacing(15); g1.setHorizontalSpacing(30)
         self.add_field(g1,0,0,"Seleccione Razón Social","razon_social",2,is_combo=True)
-        # CAMBIO: Campos bloqueados (read_only=True)
+        
+        # Corrección: Campos read_only para que no se editen manualmente
         self.add_field(g1,1,0,"RUT Empresa","rut_empresa", read_only=True)
         self.add_field(g1,1,1,"Dirección Comercial","direccion", read_only=True)
         self.add_field(g1,2,0,"Comuna","comuna", read_only=True)
         self.add_field(g1,2,1,"Región","region", read_only=True)
         v.addLayout(g1)
-        # ... Resto del método igual ...
+
         v.addWidget(self.create_label("Datos de la Licitación", css_class="SectionTitle"))
         g2=QGridLayout(); g2.setVerticalSpacing(15); g2.setHorizontalSpacing(30)
         self.add_field(g2,0,0,"Nombre de la Adquisición","nombre_adquisicion",2)
@@ -238,10 +246,6 @@ class FormView(QWidget):
         ba=QPushButton("+ Agregar Criterio Adicional"); ba.setProperty("class", "BtnAdd"); ba.setCursor(Qt.PointingHandCursor); ba.clicked.connect(self.add_dynamic_criteria)
         self.eval_layout.addWidget(ba); v.addWidget(self.eval_container); v.addStretch()
 
-    # (El resto de los métodos build_tab_structure, build_tab_calendar, helpers, save, etc. se mantienen igual al anterior)
-    # ... COPIA EL RESTO DEL CÓDIGO DEL VIEW_FORM ANTERIOR DESDE 'build_tab_structure' HACIA ABAJO ...
-    # (Lo resumo aquí para no repetir código innecesario, pero usa el bloque completo que ya tenías, 
-    #  solo asegurate de copiar la parte superior nueva con read_only=True)
     def build_tab_structure(self):
         l=QVBoxLayout(self.tab2); l.setContentsMargins(0,0,0,0)
         s=QScrollArea(); s.setWidgetResizable(True)
@@ -354,15 +358,25 @@ class FormView(QWidget):
             nv, pv = n.text().strip(), p.text().strip()
             if nv: dyn.append({"name":nv, "pct":pv}); txt += f"\n- {nv}: {pv}%"
         d["extra_criteria"] = dyn; d["otros_criterios"] = txt
+        
+        # --- BLOQUE CORREGIDO: FILTRO DE CALENDARIO ---
         cal_data = []
         for entry in self.calendar_rows:
-            cal_data.append({
-                "actividad": entry["i_act"].toPlainText().strip(), 
-                "inicio": entry["i_ini"].text().strip(), 
-                "termino": entry["i_fin"].text().strip(), 
-                "obs": entry["i_obs"].toPlainText().strip()
-            })
+            act = entry["i_act"].toPlainText().strip()
+            ini = entry["i_ini"].text().strip()
+            fin = entry["i_fin"].text().strip()
+            obs = entry["i_obs"].toPlainText().strip()
+            # Solo agregar si tiene contenido real
+            if act or ini or fin or obs:
+                cal_data.append({
+                    "actividad": act, 
+                    "inicio": ini, 
+                    "termino": fin, 
+                    "obs": obs
+                })
         d["calendario"] = cal_data
+        # ----------------------------------------------
+
         if not d.get("razon_social") or not d.get("nombre_adquisicion"): 
             if not silent: QMessageBox.warning(self, "Faltan Datos", "Complete Razón Social y Nombre.")
             return False
@@ -407,6 +421,7 @@ class FormView(QWidget):
         
         saved_cal = d.get("calendario", [])
         if not saved_cal:
+            # Filas vacías por defecto visual, pero el filtro evitará que se guarden si no se tocan
             defaults = [
                 {"act": "Envío de carta invitación y bases de licitación", "obs": ""},
                 {"act": "Visita Terreno", "obs": "(Opcional)"},
