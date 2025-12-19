@@ -3,8 +3,8 @@ from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                                QLineEdit, QTextEdit, QPushButton, QFrame, 
                                QComboBox, QScrollArea, QCheckBox,
-                               QGridLayout, QMessageBox, QFileDialog)
-from PySide6.QtCore import Qt, QTimer
+                               QGridLayout, QMessageBox, QFileDialog, QTimeEdit)
+from PySide6.QtCore import Qt, QTimer, QTime
 from PySide6.QtGui import QIntValidator
 from src.data.base_texts import TEXTOS_LEGALES
 
@@ -53,8 +53,8 @@ class FormView(QWidget):
             QLabel.SubSectionTitle { color: #2dd4bf; font-size: 14px; font-weight: 700; margin-top: 0px; margin-bottom: 2px; }
             QLabel.PageTitle { color: white; font-size: 24px; font-weight: 800; margin-bottom: 15px; }
             QLabel { color: #94a3b8; font-size: 13px; font-weight: 600; margin-bottom: 2px; background: transparent; border: none; }
-            QLineEdit, QTextEdit, QComboBox { background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; font-size: 14px; color: white; }
-            QLineEdit:focus, QTextEdit:focus, QComboBox:focus { border: 1px solid #3b82f6; background-color: #26334a; }
+            QLineEdit, QTextEdit, QComboBox, QTimeEdit { background-color: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 10px 12px; font-size: 14px; color: white; }
+            QLineEdit:focus, QTextEdit:focus, QComboBox:focus, QTimeEdit:focus { border: 1px solid #3b82f6; background-color: #26334a; }
             QLineEdit:read-only { background-color: #1e293b; color: #94a3b8; border: 1px solid #334155; }
             QCheckBox { spacing: 10px; color: #cbd5e1; font-size: 14px; margin-bottom: 8px; }
             QCheckBox::indicator { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #475569; background: #1e293b; }
@@ -75,8 +75,7 @@ class FormView(QWidget):
         sl = QVBoxLayout(sidebar); sl.setAlignment(Qt.AlignTop); sl.setContentsMargins(15, 30, 15, 20); sl.setSpacing(10)
         sl.addWidget(QLabel("CONFIGURACIÓN", styleSheet="color: white; font-size: 18px; font-weight: 800; padding-left: 10px; margin-bottom: 20px;"))
         
-        # Botón único (ya no es navegación real, solo indicativo)
-        self.btn_nav = QPushButton("Datos de la Licitación")
+        self.btn_nav = QPushButton("Datos del Formulario")
         self.btn_nav.setProperty("class", "NavButton")
         self.btn_nav.setChecked(True)
         sl.addWidget(self.btn_nav)
@@ -137,7 +136,7 @@ class FormView(QWidget):
         YELLOW_INSTR_STYLE = "color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"
 
         # --- SECCIÓN 1: CARACTERÍSTICAS GENERALES ---
-        v.addWidget(self.create_label("Datos de la Licitación", css_class="PageTitle"))
+        v.addWidget(self.create_label("Características", css_class="PageTitle"))
         v.addWidget(self.create_label("Información General y Empresa", css_class="SectionTitle"))
         g1=QGridLayout(); g1.setVerticalSpacing(15); g1.setHorizontalSpacing(30)
         self.add_field(g1,0,0,"Seleccione Razón Social","razon_social",2,is_combo=True)
@@ -192,7 +191,7 @@ class FormView(QWidget):
         v.addWidget(self.create_label("Ingrese la hora de la entrega de la propuesta", 
                                       style_sheet=YELLOW_INSTR_STYLE + "margin-top: 10px;"))
         g_ent_2 = QGridLayout(); g_ent_2.setVerticalSpacing(15); g_ent_2.setHorizontalSpacing(30)
-        self.add_field(g_ent_2, 0, 0, "Hora de entrega para la propuesta", "hora_entrega", span=2)
+        self.add_time_field(g_ent_2, 0, 0, "Hora de entrega para la propuesta", "hora_entrega", span=2)
         v.addLayout(g_ent_2)
 
         # --- 6. COMISIÓN DE EVALUACIÓN ---
@@ -264,6 +263,34 @@ class FormView(QWidget):
         if is_combo: w=QComboBox(); w.addItems([""]+list(self.EMPRESAS_DATA.keys())); w.currentTextChanged.connect(self.autofill_provider_data)
         else: w=QLineEdit(val); w.setReadOnly(read_only)
         w.setFixedHeight(45); self.inputs[k]=w; v.addWidget(w); g.addWidget(cnt, r, c, 1, span)
+
+    # --- NUEVA FUNCIÓN MEJORADA: HORA + TEXTO "HORAS" ---
+    def add_time_field(self, g, r, c, l, k, span=1):
+        cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5)
+        lbl = QLabel(l); lbl.setWordWrap(True); v.addWidget(lbl)
+        
+        # Container horizontal
+        h_cnt = QWidget()
+        h_layout = QHBoxLayout(h_cnt)
+        h_layout.setContentsMargins(0,0,0,0)
+        h_layout.setSpacing(10)
+        
+        w=QTimeEdit()
+        w.setDisplayFormat("HH:mm")
+        w.setFixedHeight(45)
+        w.setTime(QTime(12, 0))
+        
+        h_layout.addWidget(w)
+        
+        # Agregamos la etiqueta "Horas" al lado
+        lbl_h = QLabel("Horas")
+        lbl_h.setStyleSheet("color: #cbd5e1; font-size: 14px; font-weight: 500;")
+        h_layout.addWidget(lbl_h)
+        
+        self.inputs[k]=w
+        v.addWidget(h_cnt)
+        g.addWidget(cnt, r, c, 1, span)
+    # ----------------------------------------------------
     
     def add_multiline_field(self, g, r, c, l, k, val=""):
         cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5)
@@ -301,11 +328,10 @@ class FormView(QWidget):
         d = {}
         for k, w in self.inputs.items(): d[k] = w.toPlainText() if isinstance(w, QTextEdit) else (w.currentText() if isinstance(w, QComboBox) else w.text())
         
-        # --- AQUÍ LA MAGIA: Forzamos que todas las secciones estén seleccionadas (1) ---
+        # Forzamos todas las secciones activadas
         for item in self.SECTIONS_LIST:
             k = "check_" + item.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
             d[k] = 1 
-        # --------------------------------------------------------------------------------
             
         d["check_bases_tecnicas"] = 1
         dyn, txt = [], ""
@@ -343,6 +369,9 @@ class FormView(QWidget):
                 w = self.inputs[k]
                 if isinstance(w, QComboBox): w.setCurrentText(str(v))
                 elif isinstance(w, QTextEdit): w.setPlainText(str(v))
+                elif isinstance(w, QTimeEdit): # Recuperar hora guardada
+                     try: w.setTime(QTime.fromString(str(v), "HH:mm"))
+                     except: pass
                 else: w.setText(str(v))
         
         while self.dynamic_inputs: i1, i2, r = self.dynamic_inputs[0]; self.remove_dynamic_criteria(r, i1, i2)
