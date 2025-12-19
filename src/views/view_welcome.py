@@ -1,26 +1,26 @@
+import os
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QPushButton, 
                                QFrame, QHBoxLayout)
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont, QCursor
+from PySide6.QtGui import QFont, QCursor, QPixmap
 
 class WelcomeView(QWidget):
     def __init__(self, controller):
         super().__init__()
         self.controller = controller
         
-        # --- COLORES (Copiados de tu versión anterior) ---
+        # --- COLORES ---
         self.COLORS = {
             "bg_main": "#0f172a",
-            "card_bg": "#1e293b",
+            "card_bg": "#334155",
             "accent": "#3b82f6",
             "accent_hover": "#2563eb",
             "text": "#f8fafc",
-            "text_gray": "#94a3b8",
-            "btn_secondary": "#334155"
+            "text_gray": "#ffffff",
+            "btn_secondary": "#4F78B1"
         }
 
         # Configuración del widget principal
-        # En PySide no se usa 'configure(fg_color)', se usa setStyleSheet
         self.setStyleSheet(f"background-color: {self.COLORS['bg_main']};")
         
         self.place_content()
@@ -31,11 +31,10 @@ class WelcomeView(QWidget):
         main_layout.setAlignment(Qt.AlignCenter) # Centrar todo verticalmente
         
         # --- TARJETA CENTRAL ---
-        # Usamos QFrame en lugar de CTkFrame
         card = QFrame()
-        card.setFixedSize(600, 450)
+        card.setFixedSize(600, 480) # Un poco más alto para acomodar el logo
         
-        # Estilos CSS (QSS) para replicar la apariencia de CustomTkinter
+        # Estilos CSS (QSS)
         card.setStyleSheet(f"""
             QFrame {{
                 background-color: {self.COLORS['card_bg']};
@@ -48,22 +47,37 @@ class WelcomeView(QWidget):
         card_layout.setAlignment(Qt.AlignCenter)
         card_layout.setSpacing(10) # Espacio entre elementos
 
-        # 1. Emoji
-        lbl_emoji = QLabel("🚀")
-        lbl_emoji.setStyleSheet("background-color: transparent; font-size: 60px;")
-        lbl_emoji.setAlignment(Qt.AlignCenter)
-        card_layout.addWidget(lbl_emoji)
-        card_layout.addSpacing(20) # Margen extra como pady=(40, 10)
+        # 1. IMAGEN / LOGO (Reemplazo del cohete)
+        lbl_logo = QLabel()
+        lbl_logo.setAlignment(Qt.AlignCenter)
+        lbl_logo.setStyleSheet("background-color: transparent;")
+        
+        # Ruta de la imagen
+        img_path = os.path.join("assets", "icons", "logo.png")
+        
+        if os.path.exists(img_path):
+            # Cargar y escalar la imagen
+            pixmap = QPixmap(img_path)
+            # Escalar a una altura de 100px manteniendo la proporción (SmoothTransformation para mejor calidad)
+            scaled_pixmap = pixmap.scaledToHeight(120, Qt.SmoothTransformation)
+            lbl_logo.setPixmap(scaled_pixmap)
+        else:
+            # Fallback: Si no encuentra la imagen, muestra el cohete
+            lbl_logo.setText("🚀")
+            lbl_logo.setStyleSheet("background-color: transparent; font-size: 60px;")
+
+        card_layout.addWidget(lbl_logo)
+        card_layout.addSpacing(10)
 
         # 2. Título
         lbl_title = QLabel("Generador de Licitaciones")
-        lbl_title.setStyleSheet(f"color: {self.COLORS['text']}; background-color: transparent; font-weight: bold; font-size: 32px; font-family: Roboto;")
+        lbl_title.setStyleSheet(f"color: {self.COLORS['text']}; background-color: transparent; font-weight: bold; font-size: 32px; font-family: 'Segoe UI', Roboto, sans-serif;")
         lbl_title.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(lbl_title)
 
         # 3. Subtítulo
         lbl_desc = QLabel("Gestión inteligente de documentos.\nCrea, edita y administra tus licitaciones.")
-        lbl_desc.setStyleSheet(f"color: {self.COLORS['text_gray']}; background-color: transparent; font-size: 14px; font-family: Roboto;")
+        lbl_desc.setStyleSheet(f"color: {self.COLORS['text_gray']}; background-color: transparent; font-size: 14px; font-family: 'Segoe UI', Roboto, sans-serif;")
         lbl_desc.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(lbl_desc)
         card_layout.addSpacing(30)
@@ -79,7 +93,8 @@ class WelcomeView(QWidget):
                 font-size: 16px;
                 font-weight: bold;
                 border-radius: 10px;
-                font-family: Roboto;
+                font-family: 'Segoe UI', Roboto, sans-serif;
+                border: none;
             }}
             QPushButton:hover {{
                 background-color: {self.COLORS['accent_hover']};
@@ -100,7 +115,7 @@ class WelcomeView(QWidget):
                 border-radius: 10px;
                 font-size: 15px;
                 font-weight: bold;
-                font-family: Roboto;
+                font-family: 'Segoe UI', Roboto, sans-serif;
             }}
             QPushButton:hover {{
                 background-color: {self.COLORS['btn_secondary']};
@@ -113,10 +128,9 @@ class WelcomeView(QWidget):
         # Añadir la tarjeta al layout principal
         main_layout.addWidget(card)
 
-        # 6. Footer (v2.1 ...)
-        # Lo añadimos fuera de la tarjeta, en el layout principal
-        lbl_footer = QLabel("v2.1 | Powered by Python")
-        lbl_footer.setStyleSheet(f"color: #334155; font-size: 10px; font-family: Roboto;") # Usamos un color oscuro sutil
+        # 6. Footer
+        lbl_footer = QLabel("v2.2 | Powered by Python")
+        lbl_footer.setStyleSheet(f"color: #334155; font-size: 10px; font-family: 'Segoe UI', Roboto, sans-serif;")
         lbl_footer.setAlignment(Qt.AlignCenter)
         
         main_layout.addSpacing(20)

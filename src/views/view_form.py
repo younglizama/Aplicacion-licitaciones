@@ -13,18 +13,31 @@ class FormView(QWidget):
         super().__init__()
         self.controller = controller
         
+        # --- 1. DATOS DE EMPRESAS (Con resolvedor automático) ---
         self.EMPRESAS_DATA = {
             "Fundación de Salud Trabajadores Banco Estado de Chile": {
-                "rut": "71.235.700-2", "direccion": "Profesora Amanda Labarca N°70, piso 5",
-                "comuna": "Santiago", "region": "Metropolitana", "organismo": "Isapre Fundación Banco Estado"
+                "rut": "71.235.700-2", 
+                "direccion": "Profesora Amanda Labarca N°70, piso 5",
+                "comuna": "Santiago", 
+                "region": "Metropolitana", 
+                "organismo": "Isapre Fundación Banco Estado",
+                "resolvedor": "El gerente general"
             },
             "Fundación Asistencial Trabajadores BancoEstado de Chile": {
-                "rut": "71.980.000-9", "direccion": "Profesora Amanda Labarca N°70",
-                "comuna": "Santiago", "region": "Metropolitana", "organismo": "Fundación Asistencial"
+                "rut": "71.980.000-9", 
+                "direccion": "Profesora Amanda Labarca N°70",
+                "comuna": "Santiago", 
+                "region": "Metropolitana", 
+                "organismo": "Fundación Asistencial",
+                "resolvedor": "El gerente general"
             },
             "Centro Médico y Dental Fundación": {
-                "rut": "76.123.456-7", "direccion": "Profesora Amanda Labarca N°70",
-                "comuna": "Santiago", "region": "Metropolitana", "organismo": "CMDF"
+                "rut": "76.123.456-7", 
+                "direccion": "Profesora Amanda Labarca N°70",
+                "comuna": "Santiago", 
+                "region": "Metropolitana", 
+                "organismo": "CMDF",
+                "resolvedor": "La administración"
             }
         }
 
@@ -107,12 +120,9 @@ class FormView(QWidget):
 
         # --- CONTENIDO PRINCIPAL ---
         content = QWidget(); cl = QVBoxLayout(content); cl.setContentsMargins(0,0,0,0)
-        
-        # Única vista (formulario)
         self.form_widget = QWidget()
         self.build_form_content()
         cl.addWidget(self.form_widget)
-        
         main_layout.addWidget(sidebar); main_layout.addWidget(content)
         
         self.autosave_timer = QTimer(self)
@@ -132,7 +142,6 @@ class FormView(QWidget):
         c=QWidget(); v=QVBoxLayout(c); v.setContentsMargins(60,30,60,40); v.setSpacing(20); v.setAlignment(Qt.AlignTop)
         s.setWidget(c); l.addWidget(s)
         
-        # Estilo amarillo para instrucciones
         YELLOW_INSTR_STYLE = "color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"
 
         # --- SECCIÓN 1: CARACTERÍSTICAS GENERALES ---
@@ -169,7 +178,7 @@ class FormView(QWidget):
         self.add_field(g_val, 0, 0, "Cantidad de Días", "validez_propuesta", val="30 días")
         v.addLayout(g_val)
 
-        # --- 4. CONSULTAS, ACLARACIONES Y MODIFICACIONES ---
+        # --- 4. CONSULTAS ---
         v.addWidget(self.create_label("CONSULTAS, ACLARACIONES Y MODIFICACIONES", css_class="SectionTitle"))
         v.addWidget(self.create_label("Ingrese el correo electronico de la persona encargada para responder consultas o aclaraciones de las bases", 
                                       style_sheet=YELLOW_INSTR_STYLE))
@@ -179,15 +188,12 @@ class FormView(QWidget):
 
         # --- 5. ENTREGA DE LAS PROPUESTAS ---
         v.addWidget(self.create_label("ENTREGA DE LAS PROPUESTAS", css_class="SectionTitle"))
-        
-        # Bloque 1: Encargado/a
         v.addWidget(self.create_label("Ingrese quien será el o la encargado/a de recibir la propuesta", 
                                       style_sheet=YELLOW_INSTR_STYLE))
         g_ent_1 = QGridLayout(); g_ent_1.setVerticalSpacing(15); g_ent_1.setHorizontalSpacing(30)
         self.add_field(g_ent_1, 0, 0, "Encargado/a", "encargado_propuesta", span=2)
         v.addLayout(g_ent_1)
         
-        # Bloque 2: Hora
         v.addWidget(self.create_label("Ingrese la hora de la entrega de la propuesta", 
                                       style_sheet=YELLOW_INSTR_STYLE + "margin-top: 10px;"))
         g_ent_2 = QGridLayout(); g_ent_2.setVerticalSpacing(15); g_ent_2.setHorizontalSpacing(30)
@@ -199,8 +205,20 @@ class FormView(QWidget):
         v.addWidget(self.create_label("Ingrese quienes participaran en la comision de evaluacion", 
                                       style_sheet=YELLOW_INSTR_STYLE))
         g_comision = QGridLayout(); g_comision.setVerticalSpacing(15); g_comision.setHorizontalSpacing(30)
-        self.add_multiline_field(g_comision, 0, 0, "Comisión de Evaluación", "comision_evaluacion")
+        
+        # --- AQUÍ SE AGREGÓ EL TEXTO PREDETERMINADO ---
+        default_comision = "Subgerencia de Administración y Finanzas, Subgerencia de Operaciones, Calidad de Servicio y Fiscalía."
+        self.add_multiline_field(g_comision, 0, 0, "Comisión de Evaluación", "comision_evaluacion", val=default_comision)
+        # -----------------------------------------------
+        
         v.addLayout(g_comision)
+        
+        # --- RESOLUCIÓN AUTOMÁTICA ---
+        v.addWidget(self.create_label("La propuesta será resuelta por:", css_class="SubSectionTitle", style_sheet="margin-top: 20px; color: #3b82f6;"))
+        v.addWidget(self.create_label("Este campo se completa automáticamente según la empresa seleccionada.", style_sheet=YELLOW_INSTR_STYLE))
+        g_resol = QGridLayout(); g_resol.setVerticalSpacing(15); g_resol.setHorizontalSpacing(30)
+        self.add_field(g_resol, 0, 0, "Autoridad que resuelve", "resolvedor_propuesta", span=2, read_only=True)
+        v.addLayout(g_resol)
         
         # --- SECCIÓN: GARANTÍAS ---
         v.addWidget(self.create_label("Garantías", css_class="SectionTitle"))
@@ -224,7 +242,6 @@ class FormView(QWidget):
         self.eval_container=QWidget(); self.eval_layout=QVBoxLayout(self.eval_container); self.eval_layout.setContentsMargins(0,5,0,0); self.eval_layout.setSpacing(10)
         hf=QHBoxLayout(); hf.setSpacing(30)
         
-        # Campos de porcentajes (con Huella de Carbono)
         self.add_field_vbox(hf, "Oferta Económica (%)", "eval_economica", is_pct=True)
         self.add_field_vbox(hf, "Oferta Técnica (%)", "eval_tecnica", is_pct=True)
         self.add_field_vbox(hf, "Huella de Carbono (%)", "hue_carbono", is_pct=True) 
@@ -264,42 +281,32 @@ class FormView(QWidget):
         else: w=QLineEdit(val); w.setReadOnly(read_only)
         w.setFixedHeight(45); self.inputs[k]=w; v.addWidget(w); g.addWidget(cnt, r, c, 1, span)
 
-    # --- NUEVA FUNCIÓN MEJORADA: HORA + TEXTO "HORAS" ---
     def add_time_field(self, g, r, c, l, k, span=1):
         cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5)
         lbl = QLabel(l); lbl.setWordWrap(True); v.addWidget(lbl)
-        
-        # Container horizontal
-        h_cnt = QWidget()
-        h_layout = QHBoxLayout(h_cnt)
-        h_layout.setContentsMargins(0,0,0,0)
-        h_layout.setSpacing(10)
-        
-        w=QTimeEdit()
-        w.setDisplayFormat("HH:mm")
-        w.setFixedHeight(45)
-        w.setTime(QTime(12, 0))
-        
+        h_cnt = QWidget(); h_layout = QHBoxLayout(h_cnt); h_layout.setContentsMargins(0,0,0,0); h_layout.setSpacing(10)
+        w=QTimeEdit(); w.setDisplayFormat("HH:mm"); w.setFixedHeight(45); w.setTime(QTime(12, 0))
         h_layout.addWidget(w)
-        
-        # Agregamos la etiqueta "Horas" al lado
-        lbl_h = QLabel("Horas")
-        lbl_h.setStyleSheet("color: #cbd5e1; font-size: 14px; font-weight: 500;")
+        lbl_h = QLabel("Horas"); lbl_h.setStyleSheet("color: #cbd5e1; font-size: 14px; font-weight: 500;")
         h_layout.addWidget(lbl_h)
-        
-        self.inputs[k]=w
-        v.addWidget(h_cnt)
-        g.addWidget(cnt, r, c, 1, span)
-    # ----------------------------------------------------
+        self.inputs[k]=w; v.addWidget(h_cnt); g.addWidget(cnt, r, c, 1, span)
     
     def add_multiline_field(self, g, r, c, l, k, val=""):
         cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5)
         lbl = QLabel(l); lbl.setWordWrap(True); v.addWidget(lbl)
         w=QTextEdit(val); w.setFixedHeight(75); self.inputs[k]=w; v.addWidget(w); g.addWidget(cnt, r, c, 1, 1)
     
+    # --- 2. ACTUALIZACIÓN DE RELLENO AUTOMÁTICO ---
     def autofill_provider_data(self, t):
         d = self.EMPRESAS_DATA.get(t)
-        if d: self.inputs["rut_empresa"].setText(d["rut"]); self.inputs["direccion"].setText(d["direccion"]); self.inputs["comuna"].setText(d["comuna"]); self.inputs["region"].setText(d["region"]); self.inputs["organismo"].setText(d.get("organismo",""))
+        if d: 
+            self.inputs["rut_empresa"].setText(d["rut"])
+            self.inputs["direccion"].setText(d["direccion"])
+            self.inputs["comuna"].setText(d["comuna"])
+            self.inputs["region"].setText(d["region"])
+            self.inputs["organismo"].setText(d.get("organismo",""))
+            # Rellenar automáticamente el resolvedor
+            self.inputs["resolvedor_propuesta"].setText(d.get("resolvedor", ""))
     
     def fmt_thousands(self, w): t=w.text().replace(".",""); w.setText("{:,}".format(int(t)).replace(",", ".") if t.isdigit() else t)
 
@@ -327,8 +334,6 @@ class FormView(QWidget):
             
         d = {}
         for k, w in self.inputs.items(): d[k] = w.toPlainText() if isinstance(w, QTextEdit) else (w.currentText() if isinstance(w, QComboBox) else w.text())
-        
-        # Forzamos todas las secciones activadas
         for item in self.SECTIONS_LIST:
             k = "check_" + item.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
             d[k] = 1 
