@@ -133,6 +133,11 @@ class FormView(QWidget):
         s=QScrollArea(); s.setWidgetResizable(True)
         c=QWidget(); v=QVBoxLayout(c); v.setContentsMargins(60,30,60,40); v.setSpacing(20); v.setAlignment(Qt.AlignTop)
         s.setWidget(c); l.addWidget(s)
+        
+        # Estilo amarillo para instrucciones
+        YELLOW_INSTR_STYLE = "color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"
+
+        # --- SECCIÓN 1: CARACTERÍSTICAS GENERALES ---
         v.addWidget(self.create_label("Características", css_class="PageTitle"))
         v.addWidget(self.create_label("Información General y Empresa", css_class="SectionTitle"))
         g1=QGridLayout(); g1.setVerticalSpacing(15); g1.setHorizontalSpacing(30)
@@ -144,6 +149,7 @@ class FormView(QWidget):
         self.add_field(g1,2,1,"Región","region", read_only=True)
         v.addLayout(g1)
 
+        # --- SECCIÓN 2: DATOS LICITACIÓN ---
         v.addWidget(self.create_label("Datos de la Licitación", css_class="SectionTitle"))
         g2=QGridLayout(); g2.setVerticalSpacing(15); g2.setHorizontalSpacing(30)
         self.add_field(g2,0,0,"Nombre de la Adquisición","nombre_adquisicion",2)
@@ -157,15 +163,48 @@ class FormView(QWidget):
         self.add_field(g2,5,0,"Moneda","moneda",val="Pesos Chilenos (CLP)", span=2)
         v.addLayout(g2)
 
-        # --- AQUI: NUEVA SECCIÓN AGREGADA ---
+        # --- SECCIÓN 3: VALIDEZ ---
         v.addWidget(self.create_label("Validez de la Propuesta", css_class="SectionTitle"))
         v.addWidget(self.create_label("Aquí se indica en <b>días</b> la validez de las ofertas técnicas y económicas", 
-                                      style_sheet="color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"))
+                                      style_sheet=YELLOW_INSTR_STYLE))
         g_val = QGridLayout(); g_val.setVerticalSpacing(15); g_val.setHorizontalSpacing(30)
         self.add_field(g_val, 0, 0, "Cantidad de Días", "validez_propuesta", val="30 días")
         v.addLayout(g_val)
-        # ------------------------------------
 
+        # --- 4. CONSULTAS, ACLARACIONES Y MODIFICACIONES ---
+        v.addWidget(self.create_label("CONSULTAS, ACLARACIONES Y MODIFICACIONES", css_class="SectionTitle"))
+        v.addWidget(self.create_label("Ingrese el correo electronico de la persona encargada para responder consultas o aclaraciones de las bases", 
+                                      style_sheet=YELLOW_INSTR_STYLE))
+        g_consultas = QGridLayout(); g_consultas.setVerticalSpacing(15); g_consultas.setHorizontalSpacing(30)
+        self.add_field(g_consultas, 0, 0, "Correo Electrónico Encargado", "correo_electronico", span=2)
+        v.addLayout(g_consultas)
+
+        # --- 5. ENTREGA DE LAS PROPUESTAS ---
+        v.addWidget(self.create_label("ENTREGA DE LAS PROPUESTAS", css_class="SectionTitle"))
+        
+        # Bloque 1: Encargado/a
+        v.addWidget(self.create_label("Ingrese quien será el o la encargado/a de recibir la propuesta", 
+                                      style_sheet=YELLOW_INSTR_STYLE))
+        g_ent_1 = QGridLayout(); g_ent_1.setVerticalSpacing(15); g_ent_1.setHorizontalSpacing(30)
+        self.add_field(g_ent_1, 0, 0, "Encargado/a", "encargado_propuesta", span=2)
+        v.addLayout(g_ent_1)
+        
+        # Bloque 2: Hora
+        v.addWidget(self.create_label("Ingrese la hora de la entrega de la propuesta", 
+                                      style_sheet=YELLOW_INSTR_STYLE + "margin-top: 10px;"))
+        g_ent_2 = QGridLayout(); g_ent_2.setVerticalSpacing(15); g_ent_2.setHorizontalSpacing(30)
+        self.add_field(g_ent_2, 0, 0, "Hora de entrega ", "hora_entrega", span=2)
+        v.addLayout(g_ent_2)
+
+        # --- 6. COMISIÓN DE EVALUACIÓN ---
+        v.addWidget(self.create_label("COMISIÓN DE EVALUACIÓN DE LAS OFERTAS", css_class="SectionTitle"))
+        v.addWidget(self.create_label("Ingrese quienes participaran en la comision de evaluacion", 
+                                      style_sheet=YELLOW_INSTR_STYLE))
+        g_comision = QGridLayout(); g_comision.setVerticalSpacing(15); g_comision.setHorizontalSpacing(30)
+        self.add_multiline_field(g_comision, 0, 0, "Comisión de Evaluación", "comision_evaluacion")
+        v.addLayout(g_comision)
+        
+        # --- SECCIÓN: GARANTÍAS ---
         v.addWidget(self.create_label("Garantías", css_class="SectionTitle"))
         sl=QVBoxLayout(); sl.setSpacing(5); sl.setContentsMargins(0,0,0,0)
         sl.addWidget(self.create_label("Seriedad de la Oferta", css_class="SubSectionTitle"))
@@ -181,13 +220,18 @@ class FormView(QWidget):
         self.inputs["monto_seriedad"].editingFinished.connect(lambda: self.fmt_thousands(self.inputs["monto_seriedad"]))
         self.inputs["monto_cumplimiento"].editingFinished.connect(lambda: self.fmt_thousands(self.inputs["monto_cumplimiento"]))
         
+        # --- SECCIÓN: EVALUACIÓN Y ADJUDICACIÓN ---
         v.addWidget(self.create_label("Evaluación y Adjudicación de Ofertas", css_class="SectionTitle"))
-        v.addWidget(self.create_label("⚠️ La suma de todos los porcentajes debe ser exactamente 100%", style_sheet="color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"))
+        v.addWidget(self.create_label("⚠️ La suma de todos los porcentajes debe ser exactamente 100%", style_sheet=YELLOW_INSTR_STYLE))
         self.eval_container=QWidget(); self.eval_layout=QVBoxLayout(self.eval_container); self.eval_layout.setContentsMargins(0,5,0,0); self.eval_layout.setSpacing(10)
         hf=QHBoxLayout(); hf.setSpacing(30)
+        
+        # Campos de porcentajes (Actualizado con Huella de Carbono)
         self.add_field_vbox(hf, "Oferta Económica (%)", "eval_economica", is_pct=True)
         self.add_field_vbox(hf, "Oferta Técnica (%)", "eval_tecnica", is_pct=True)
+        self.add_field_vbox(hf, "Huella de Carbono (%)", "hue_carbono", is_pct=True) # NUEVO CAMPO
         self.add_field_vbox(hf, "Antecedentes Legales (%)", "eval_experiencia", is_pct=True)
+        
         self.eval_layout.addLayout(hf)
         self.dynamic_criteria_layout=QVBoxLayout(); self.dynamic_criteria_layout.setContentsMargins(0,0,0,0); self.dynamic_criteria_layout.setSpacing(10)
         self.eval_layout.addLayout(self.dynamic_criteria_layout)
@@ -247,7 +291,8 @@ class FormView(QWidget):
 
     def validate_percentages(self):
         total = 0
-        for k in ["eval_economica", "eval_tecnica", "eval_experiencia"]:
+        # AQUI: Se agrega 'hue_carbono' a la validación
+        for k in ["eval_economica", "eval_tecnica", "hue_carbono", "eval_experiencia"]:
             try: val = int(self.inputs[k].text().strip())
             except: val = 0
             total += val
