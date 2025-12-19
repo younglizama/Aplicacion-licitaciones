@@ -2,10 +2,10 @@ import re
 from datetime import datetime
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                                QLineEdit, QTextEdit, QPushButton, QFrame, 
-                               QComboBox, QScrollArea, QCheckBox, QStackedWidget,
-                               QGridLayout, QMessageBox, QFileDialog, QSizePolicy)
-from PySide6.QtCore import Qt, QSize, QTimer
-from PySide6.QtGui import QColor, QFont, QCursor, QIntValidator
+                               QComboBox, QScrollArea, QCheckBox,
+                               QGridLayout, QMessageBox, QFileDialog)
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QIntValidator
 from src.data.base_texts import TEXTOS_LEGALES
 
 class FormView(QWidget):
@@ -29,9 +29,9 @@ class FormView(QWidget):
         }
 
         self.inputs = {}
-        self.checkboxes = {}
         self.dynamic_inputs = [] 
         
+        # Lista necesaria para configuración interna (todo activado por defecto)
         self.SECTIONS_LIST = [
             "CARACTERÍSTICAS DE LA LICITACIÓN", "OBJETIVOS", "DEFINICIONES", 
             "ORDEN DE PRECEDENCIA DE LOS DOCUMENTOS", "CONTENIDO DE LAS BASES", "PLAZOS", 
@@ -70,13 +70,17 @@ class FormView(QWidget):
 
         main_layout = QHBoxLayout(self); main_layout.setContentsMargins(0,0,0,0); main_layout.setSpacing(0)
 
+        # --- BARRA LATERAL ---
         sidebar = QFrame(); sidebar.setFixedWidth(260); sidebar.setStyleSheet("background-color: #0f172a; border-right: 1px solid #1e293b;")
         sl = QVBoxLayout(sidebar); sl.setAlignment(Qt.AlignTop); sl.setContentsMargins(15, 30, 15, 20); sl.setSpacing(10)
         sl.addWidget(QLabel("CONFIGURACIÓN", styleSheet="color: white; font-size: 18px; font-weight: 800; padding-left: 10px; margin-bottom: 20px;"))
         
-        self.btn_t1 = self.crear_nav("1. Datos Generales", lambda: self.cambiar_tab(0))
-        self.btn_t2 = self.crear_nav("2. Estructura Bases", lambda: self.cambiar_tab(1)) 
-        sl.addWidget(self.btn_t1); sl.addWidget(self.btn_t2); sl.addStretch()
+        # Botón único (ya no es navegación real, solo indicativo)
+        self.btn_nav = QPushButton("Datos de la Licitación")
+        self.btn_nav.setProperty("class", "NavButton")
+        self.btn_nav.setChecked(True)
+        sl.addWidget(self.btn_nav)
+        sl.addStretch()
 
         self.btn_gen_word = QPushButton("📄 Generar Word")
         self.btn_gen_word.setCursor(Qt.PointingHandCursor); self.btn_gen_word.setFixedHeight(45)
@@ -102,34 +106,29 @@ class FormView(QWidget):
         btn_back.clicked.connect(self.go_back)
         sl.addWidget(btn_back)
 
+        # --- CONTENIDO PRINCIPAL ---
         content = QWidget(); cl = QVBoxLayout(content); cl.setContentsMargins(0,0,0,0)
-        self.stack = QStackedWidget(); cl.addWidget(self.stack)
-        self.tab1 = QWidget(); self.build_tab_1(); self.stack.addWidget(self.tab1)
-        self.tab2 = QWidget(); self.build_tab_structure(); self.stack.addWidget(self.tab2)
+        
+        # Única vista (formulario)
+        self.form_widget = QWidget()
+        self.build_form_content()
+        cl.addWidget(self.form_widget)
         
         main_layout.addWidget(sidebar); main_layout.addWidget(content)
         
         self.autosave_timer = QTimer(self)
         self.autosave_timer.timeout.connect(lambda: self.save_only(show_msg=False))
         self.autosave_timer.start(60000)
-        self.load_existing_data(); self.cambiar_tab(0)
+        self.load_existing_data()
 
-    def crear_nav(self, t, c):
-        b=QPushButton(t); b.setProperty("class", "NavButton"); b.setCheckable(True)
-        b.setCursor(Qt.PointingHandCursor); b.clicked.connect(c); return b
-
-    def cambiar_tab(self, i): 
-        self.stack.setCurrentIndex(i)
-        self.btn_t1.setChecked(i==0); self.btn_t2.setChecked(i==1)
-        
     def create_label(self, text, css_class=None, style_sheet=None):
         l = QLabel(text)
         if css_class: l.setProperty("class", css_class)
         if style_sheet: l.setStyleSheet(style_sheet)
         return l
 
-    def build_tab_1(self):
-        l=QVBoxLayout(self.tab1); l.setContentsMargins(0,0,0,0)
+    def build_form_content(self):
+        l=QVBoxLayout(self.form_widget); l.setContentsMargins(0,0,0,0)
         s=QScrollArea(); s.setWidgetResizable(True)
         c=QWidget(); v=QVBoxLayout(c); v.setContentsMargins(60,30,60,40); v.setSpacing(20); v.setAlignment(Qt.AlignTop)
         s.setWidget(c); l.addWidget(s)
@@ -138,7 +137,7 @@ class FormView(QWidget):
         YELLOW_INSTR_STYLE = "color: #fbbf24; font-size: 13px; font-weight: 500; font-style: italic; margin-bottom: 5px;"
 
         # --- SECCIÓN 1: CARACTERÍSTICAS GENERALES ---
-        v.addWidget(self.create_label("Características", css_class="PageTitle"))
+        v.addWidget(self.create_label("Datos de la Licitación", css_class="PageTitle"))
         v.addWidget(self.create_label("Información General y Empresa", css_class="SectionTitle"))
         g1=QGridLayout(); g1.setVerticalSpacing(15); g1.setHorizontalSpacing(30)
         self.add_field(g1,0,0,"Seleccione Razón Social","razon_social",2,is_combo=True)
@@ -193,7 +192,7 @@ class FormView(QWidget):
         v.addWidget(self.create_label("Ingrese la hora de la entrega de la propuesta", 
                                       style_sheet=YELLOW_INSTR_STYLE + "margin-top: 10px;"))
         g_ent_2 = QGridLayout(); g_ent_2.setVerticalSpacing(15); g_ent_2.setHorizontalSpacing(30)
-        self.add_field(g_ent_2, 0, 0, "Hora de entrega ", "hora_entrega", span=2)
+        self.add_field(g_ent_2, 0, 0, "Hora de entrega para la propuesta", "hora_entrega", span=2)
         v.addLayout(g_ent_2)
 
         # --- 6. COMISIÓN DE EVALUACIÓN ---
@@ -226,10 +225,10 @@ class FormView(QWidget):
         self.eval_container=QWidget(); self.eval_layout=QVBoxLayout(self.eval_container); self.eval_layout.setContentsMargins(0,5,0,0); self.eval_layout.setSpacing(10)
         hf=QHBoxLayout(); hf.setSpacing(30)
         
-        # Campos de porcentajes (Actualizado con Huella de Carbono)
+        # Campos de porcentajes (con Huella de Carbono)
         self.add_field_vbox(hf, "Oferta Económica (%)", "eval_economica", is_pct=True)
         self.add_field_vbox(hf, "Oferta Técnica (%)", "eval_tecnica", is_pct=True)
-        self.add_field_vbox(hf, "Huella de Carbono (%)", "hue_carbono", is_pct=True) # NUEVO CAMPO
+        self.add_field_vbox(hf, "Huella de Carbono (%)", "hue_carbono", is_pct=True) 
         self.add_field_vbox(hf, "Antecedentes Legales (%)", "eval_experiencia", is_pct=True)
         
         self.eval_layout.addLayout(hf)
@@ -237,18 +236,6 @@ class FormView(QWidget):
         self.eval_layout.addLayout(self.dynamic_criteria_layout)
         ba=QPushButton("+ Agregar Criterio Adicional"); ba.setProperty("class", "BtnAdd"); ba.setCursor(Qt.PointingHandCursor); ba.clicked.connect(self.add_dynamic_criteria)
         self.eval_layout.addWidget(ba); v.addWidget(self.eval_container); v.addStretch()
-
-    def build_tab_structure(self):
-        l=QVBoxLayout(self.tab2); l.setContentsMargins(0,0,0,0)
-        s=QScrollArea(); s.setWidgetResizable(True)
-        c=QWidget(); v=QVBoxLayout(c); v.setContentsMargins(60,40,60,40); v.setSpacing(20)
-        s.setWidget(c); l.addWidget(s)
-        v.addWidget(self.create_label("Estructura del Documento", css_class="PageTitle"))
-        v.addWidget(self.create_label("Todos estos items deben ir en la licitación pero puedes marcar y desmarcar si no lo necesitas en tu licitación.", style_sheet="color: #94a3b8; font-size: 14px; margin-bottom: 20px;"))
-        for item in self.SECTIONS_LIST:
-            k = "check_" + item.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
-            chk=QCheckBox(item); chk.setChecked(True); self.checkboxes[k]=chk; v.addWidget(chk)
-        v.addStretch()
 
     def add_field_vbox(self, pl, l, k, is_pct=False):
         cnt=QWidget(); v=QVBoxLayout(cnt); v.setContentsMargins(0,0,0,0); v.setSpacing(5); v.addWidget(QLabel(l))
@@ -291,7 +278,6 @@ class FormView(QWidget):
 
     def validate_percentages(self):
         total = 0
-        # AQUI: Se agrega 'hue_carbono' a la validación
         for k in ["eval_economica", "eval_tecnica", "hue_carbono", "eval_experiencia"]:
             try: val = int(self.inputs[k].text().strip())
             except: val = 0
@@ -314,7 +300,13 @@ class FormView(QWidget):
             
         d = {}
         for k, w in self.inputs.items(): d[k] = w.toPlainText() if isinstance(w, QTextEdit) else (w.currentText() if isinstance(w, QComboBox) else w.text())
-        for k, w in self.checkboxes.items(): d[k] = 1 if w.isChecked() else 0
+        
+        # --- AQUÍ LA MAGIA: Forzamos que todas las secciones estén seleccionadas (1) ---
+        for item in self.SECTIONS_LIST:
+            k = "check_" + item.lower().replace(" ","_").replace(",","").replace(".","").replace("á","a").replace("é","e").replace("í","i").replace("ó","o").replace("ú","u").replace("/","_")
+            d[k] = 1 
+        # --------------------------------------------------------------------------------
+            
         d["check_bases_tecnicas"] = 1
         dyn, txt = [], ""
         for n, p, _ in self.dynamic_inputs:
@@ -352,7 +344,6 @@ class FormView(QWidget):
                 if isinstance(w, QComboBox): w.setCurrentText(str(v))
                 elif isinstance(w, QTextEdit): w.setPlainText(str(v))
                 else: w.setText(str(v))
-        for k, v in d.items():
-            if k in self.checkboxes: self.checkboxes[k].setChecked(bool(v))
+        
         while self.dynamic_inputs: i1, i2, r = self.dynamic_inputs[0]; self.remove_dynamic_criteria(r, i1, i2)
         for item in d.get("extra_criteria", []): self.add_dynamic_criteria(item.get("name", ""), item.get("pct", ""))
