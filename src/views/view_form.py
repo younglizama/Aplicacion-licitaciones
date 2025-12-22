@@ -243,9 +243,9 @@ class FormView(QWidget):
         hf=QHBoxLayout(); hf.setSpacing(30)
         
         self.add_field_vbox(hf, "Oferta Económica (%)", "eval_economica", is_pct=True)
-        self.add_field_vbox(hf, "Oferta Técnica (%)", "eval_tecnica", is_pct=True)
-        self.add_field_vbox(hf, "Huella de Carbono (%)", "hue_carbono", is_pct=True) 
+        self.add_field_vbox(hf, "Oferta Técnica (%)", "eval_tecnica", is_pct=True) 
         self.add_field_vbox(hf, "Antecedentes Legales (%)", "eval_experiencia", is_pct=True)
+        self.add_field_vbox(hf, "Huella de Carbono (%)", "hue_carbono", is_pct=True)
         
         self.eval_layout.addLayout(hf)
         self.dynamic_criteria_layout=QVBoxLayout(); self.dynamic_criteria_layout.setContentsMargins(0,0,0,0); self.dynamic_criteria_layout.setSpacing(10)
@@ -312,7 +312,7 @@ class FormView(QWidget):
 
     def validate_percentages(self):
         total = 0
-        for k in ["eval_economica", "eval_tecnica", "hue_carbono", "eval_experiencia"]:
+        for k in ["eval_economica", "eval_tecnica", "eval_experiencia", "hue_carbono"]:
             try: val = int(self.inputs[k].text().strip())
             except: val = 0
             total += val
